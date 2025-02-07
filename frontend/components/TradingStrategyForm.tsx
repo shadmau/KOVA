@@ -16,10 +16,22 @@ import { RainbowButton } from "./ui/rainbow-button";
 interface TradingStrategyFormProps {
   onChange: (value: string) => void;
 }
+
+interface Strategy {
+  id: number;
+  action: string;
+  strategyType: string;
+  assetType: string;
+  amount: string;
+  condition: string;
+  frequency: string;
+}
+
 const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
-  const [strategies, setStrategies] = useState([
+  const [nextId, setNextId] = useState(1);
+  const [strategies, setStrategies] = useState<Strategy[]>([
     {
-      id: 1,
+      id: 0,
       action: "",
       strategyType: "",
       assetType: "",
@@ -29,50 +41,56 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
     },
   ]);
 
-const getPreviewText = (strategy:any) => {
-  if (!strategy.action || !strategy.strategyType) return "";
+  const getPreviewText = (strategy: Strategy) => {
+    if (!strategy.action || !strategy.strategyType) return "";
 
-  let preview = "";
+    let preview = "";
 
-  if (strategy.strategyType === "Volume-Based") {
-    preview = `${strategy.action} the ${
-      strategy.assetType || "[asset]"
-    } in the last ${strategy.condition || "[period]"} for ${
-      strategy.amount || "0"
-    } USDT every ${strategy.frequency || "[frequency]"}`;
-  } else if (strategy.strategyType === "Fixed Asset") {
-    preview = `${strategy.action} ${strategy.amount || "0"} USDT worth of ${
-      strategy.assetType || "[asset]"
-    }`;
-  } else if (strategy.strategyType === "Time-Based") {
-    preview = `${strategy.action} ${strategy.amount || "0"} USDT worth of ${
-      strategy.assetType || "[asset]"
-    } every ${strategy.frequency || "[frequency]"}`;
-  }
+    if (strategy.strategyType === "Volume-Based") {
+      preview = `${strategy.action} the ${
+        strategy.assetType || "[asset]"
+      } in the last ${strategy.condition || "[period]"} for ${
+        strategy.amount || "0"
+      } USDT every ${strategy.frequency || "[frequency]"}`;
+    } else if (strategy.strategyType === "Fixed Asset") {
+      preview = `${strategy.action} ${strategy.amount || "0"} USDT worth of ${
+        strategy.assetType || "[asset]"
+      }`;
+    } else if (strategy.strategyType === "Time-Based") {
+      preview = `${strategy.action} ${strategy.amount || "0"} USDT worth of ${
+        strategy.assetType || "[asset]"
+      } every ${strategy.frequency || "[frequency]"}`;
+    }
 
-  return preview;
-};
+    return preview;
+  };
 
   useEffect(() => {
     const strategiesText = strategies
       .map((strategy) => getPreviewText(strategy))
-      .filter((text) => text) 
+      .filter((text) => text)
       .join(" and ");
     onChange(strategiesText);
   }, [strategies, onChange]);
 
-  const handleStrategyChange = (index:any, field:any, value:any) => {
-    const newStrategies:any = [...strategies];
-    newStrategies[index] = { ...newStrategies[index], [field]: value };
-    setStrategies(newStrategies);
+  const handleStrategyChange = (
+    id: number,
+    field: keyof Strategy,
+    value: string
+  ) => {
+    setStrategies((prevStrategies) =>
+      prevStrategies.map((strategy) =>
+        strategy.id === id ? { ...strategy, [field]: value } : strategy
+      )
+    );
   };
 
   const addStrategy = () => {
     if (strategies.length < 2) {
-      setStrategies([
-        ...strategies,
+      setStrategies((prevStrategies) => [
+        ...prevStrategies,
         {
-          id: strategies.length + 1,
+          id: nextId,
           action: "",
           strategyType: "",
           assetType: "",
@@ -81,12 +99,14 @@ const getPreviewText = (strategy:any) => {
           frequency: "",
         },
       ]);
+      setNextId((prev) => prev + 1);
     }
   };
 
-  const removeStrategy = (index:any) => {
-    const newStrategies = strategies.filter((_, i) => i !== index);
-    setStrategies(newStrategies);
+  const removeStrategy = (id: number) => {
+    setStrategies((prevStrategies) =>
+      prevStrategies.filter((strategy) => strategy.id !== id)
+    );
   };
 
   return (
@@ -106,7 +126,7 @@ const getPreviewText = (strategy:any) => {
                 <Select
                   value={strategy.action}
                   onValueChange={(value) =>
-                    handleStrategyChange(index, "action", value)
+                    handleStrategyChange(strategy.id, "action", value)
                   }
                 >
                   <SelectTrigger className="focus:border-purple-400 border-gray-300">
@@ -124,7 +144,7 @@ const getPreviewText = (strategy:any) => {
                 <Select
                   value={strategy.strategyType}
                   onValueChange={(value) =>
-                    handleStrategyChange(index, "strategyType", value)
+                    handleStrategyChange(strategy.id, "strategyType", value)
                   }
                 >
                   <SelectTrigger className="focus:border-purple-400 border-gray-300">
@@ -143,7 +163,7 @@ const getPreviewText = (strategy:any) => {
                 <Select
                   value={strategy.assetType}
                   onValueChange={(value) =>
-                    handleStrategyChange(index, "assetType", value)
+                    handleStrategyChange(strategy.id, "assetType", value)
                   }
                 >
                   <SelectTrigger className="focus:border-purple-400 border-gray-300">
@@ -180,7 +200,7 @@ const getPreviewText = (strategy:any) => {
                   placeholder="Enter amount"
                   value={strategy.amount}
                   onChange={(e) =>
-                    handleStrategyChange(index, "amount", e.target.value)
+                    handleStrategyChange(strategy.id, "amount", e.target.value)
                   }
                   className="focus:border-purple-400 border-gray-300"
                 />
@@ -192,7 +212,7 @@ const getPreviewText = (strategy:any) => {
                   <Select
                     value={strategy.condition}
                     onValueChange={(value) =>
-                      handleStrategyChange(index, "condition", value)
+                      handleStrategyChange(strategy.id, "condition", value)
                     }
                   >
                     <SelectTrigger className="focus:border-purple-400 border-gray-300">
@@ -214,7 +234,7 @@ const getPreviewText = (strategy:any) => {
                   <Select
                     value={strategy.frequency}
                     onValueChange={(value) =>
-                      handleStrategyChange(index, "frequency", value)
+                      handleStrategyChange(strategy.id, "frequency", value)
                     }
                   >
                     <SelectTrigger className="focus:border-purple-400 border-gray-300">
@@ -248,7 +268,7 @@ const getPreviewText = (strategy:any) => {
             {strategies.length > 1 && (
               <Button
                 variant="outline"
-                onClick={() => removeStrategy(index)}
+                onClick={() => removeStrategy(strategy.id)}
                 className="mt-4"
               >
                 Remove Strategy

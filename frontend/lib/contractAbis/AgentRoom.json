@@ -1,0 +1,185 @@
+[
+  { "inputs": [], "name": "AgentRoom__MaxAgentsExceeded", "type": "error" },
+  {
+    "inputs": [],
+    "name": "AgentRoom__OnlyInvestorsCanJoinRoom",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AgentRoom__OnlyOwnerCanCreateRoom",
+    "type": "error"
+  },
+  { "inputs": [], "name": "AgentRoom__OnlyOwnerCanLeaveRoom", "type": "error" },
+  {
+    "inputs": [],
+    "name": "AgentRoom__OnlyTraderCanCreateRoom",
+    "type": "error"
+  },
+  {
+    "inputs": [{ "internalType": "bytes32", "name": "key", "type": "bytes32" }],
+    "name": "EnumerableMapNonexistentKey",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "roomId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "roomType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "agentID",
+        "type": "uint256"
+      }
+    ],
+    "name": "RoomCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "roomId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "roomType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "agentIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "RoomFull",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "roomId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "roomType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "agentID",
+        "type": "uint256"
+      }
+    ],
+    "name": "RoomLeft",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint8", "name": "roomType", "type": "uint8" },
+      { "internalType": "uint256", "name": "agentID", "type": "uint256" }
+    ],
+    "name": "createRoom",
+    "outputs": [
+      { "internalType": "uint256", "name": "roomId_", "type": "uint256" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" }
+    ],
+    "name": "getAllRoomParticipants",
+    "outputs": [
+      { "internalType": "uint256[]", "name": "agentIDs", "type": "uint256[]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" }
+    ],
+    "name": "getRoomParticipant",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" }
+    ],
+    "name": "getRoomParticipants",
+    "outputs": [
+      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" },
+      { "internalType": "uint8", "name": "roomType", "type": "uint8" },
+      { "internalType": "uint256", "name": "agentID", "type": "uint256" }
+    ],
+    "name": "joinRoom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" },
+      { "internalType": "uint8", "name": "roomType", "type": "uint8" },
+      { "internalType": "uint256", "name": "agentID", "type": "uint256" }
+    ],
+    "name": "leaveRoom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "bytes", "name": "", "type": "bytes" }
+    ],
+    "name": "onERC721Received",
+    "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "roomId", "type": "uint256" }
+    ],
+    "name": "viewAgentRoomStatus",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

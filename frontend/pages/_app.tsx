@@ -8,8 +8,16 @@ import { WagmiProvider } from "@privy-io/wagmi";
 import { baseSepolia } from 'viem/chains';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "wagmi";
+import { Toaster } from "sonner";
 function MyApp({ Component, pageProps }: AppProps) {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000, // 1 minute
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
    const config = createConfig({
      chains: [baseSepolia], // Pass your required chains as an array
      transports: {
@@ -59,14 +67,13 @@ function MyApp({ Component, pageProps }: AppProps) {
             createOnLogin: "all-users",
           },
           defaultChain: baseSepolia,
-          supportedChains: [
-            baseSepolia
-          ],
+          supportedChains: [baseSepolia],
         }}
       >
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={config}>
             <Component {...pageProps} />
+            <Toaster />
           </WagmiProvider>
         </QueryClientProvider>
       </PrivyProvider>

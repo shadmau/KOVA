@@ -1,0 +1,32 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AgentRoom
+    network: base-sepolia
+    source:
+      address: "0x9527E6CFd6d73f0c241f6D15e39C7EaA7C88Bd04"
+      abi: AgentRoom
+      startBlock: 21582367
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RoomCreated
+        - RoomFull
+        - RoomLeft
+      abis:
+        - name: AgentRoom
+          file: ./abis/AgentRoom.json
+      eventHandlers:
+        - event: RoomCreated(uint256,uint8,uint256)
+          handler: handleRoomCreated
+        - event: RoomFull(uint256,uint8,uint256[])
+          handler: handleRoomFull
+        - event: RoomLeft(uint256,uint8,uint256)
+          handler: handleRoomLeft
+      file: ./src/agent-room.ts

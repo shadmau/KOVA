@@ -46,7 +46,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { icon: Home, label: "Home", href: "/home" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
     { icon: BarChart2, label: "Dashboard", href: "/dashboard" },
-    { icon: Shield, label: "Compliance", href: "/compliance" },
+    { icon: Shield, label: "Agents", href: "/agents" },
     { icon: CreditCard, label: "Payment", href: "/payment" },
     { icon: Settings, label: "Team Settings", href: "/settings" },
   ];
