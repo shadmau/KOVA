@@ -2,7 +2,6 @@
 import { createHelia } from 'helia';
 import { unixfs } from '@helia/unixfs';
 import { json } from '@helia/json';
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
 
 export class IPFSService {
   private static helia: any;

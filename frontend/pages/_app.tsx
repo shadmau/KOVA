@@ -53,7 +53,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta name="description" content="Privy Auth Starter" />
       </Head>
       <PrivyProvider
-        appId={"cm6p9sea5014u11te91f104gi" || ""}
+        appId={"cm6p9sea5014u11te91f104gi"}
         config={{
           embeddedWallets: {
             createOnLogin: "all-users",

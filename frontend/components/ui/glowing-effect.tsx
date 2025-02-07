@@ -53,7 +53,7 @@ const GlowingEffect = memo(
             lastPosition.current = { x: mouseX, y: mouseY };
           }
 
-          const center = [left + width * 0.5, top + height * 0.5];
+          const center:any = [left + width * 0.5, top + height * 0.5];
           const distanceFromCenter = Math.hypot(
             mouseX - center[0],
             mouseY - center[1]

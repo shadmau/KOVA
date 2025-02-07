@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  useAccount,
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
@@ -35,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { IPFSService } from "@/lib/ipfs";
 import { RainbowButton } from "./ui/rainbow-button";
+import TradingStrategyForm from "./TradingStrategyForm";
 
 const SUPPORTED_ASSETS = [
   "BTC",
@@ -45,12 +45,13 @@ const SUPPORTED_ASSETS = [
   "XRP",
   "SOL",
   "DOT",
-];
+] as const;
 
+type SupportedAsset = (typeof SUPPORTED_ASSETS)[number];
 interface TransactionStatusProps {
   isOpen: boolean;
   status: "loading" | "success" | "error" | null;
-  hash?: string;
+  hash?: string|null;
   onClose: () => void;
 }
 
@@ -90,7 +91,7 @@ const TransactionStatus = ({
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline text-sm"
             >
-              View on Etherscan
+              View on Basescan
             </a>
           </>
         )}
@@ -118,8 +119,8 @@ interface CreateAgentFormProps {
 
 interface FormData {
   agentRole: string;
-  riskLevel: string;
-  cryptoAssets: string[];
+  riskLevel: "Low" | "Medium" | "High";
+  cryptoAssets: SupportedAsset;
   minInvestment: string;
   maxLossTolerance: number;
   expectedReturn: number;
@@ -134,7 +135,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   >(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const { writeContractAsync, data: writeData } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
 
   const {
     isLoading: isConfirming,
@@ -149,7 +150,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     defaultValues: {
       agentRole: "",
       riskLevel: "Low",
-      cryptoAssets: [],
+      cryptoAssets: "BTC",
       minInvestment: "",
       maxLossTolerance: 5,
       expectedReturn: 10,
@@ -251,23 +252,23 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               <div
                 className={`p-6 rounded-lg bg-white-20 border cursor-pointer ${
                   field.value === "Investor"
-                    ? "border-purple-600 bg-purple-300/50"
-                    : "border-gray-200"
+                    ? "border-purple-600 bg-purple-300/20"
+                    : "border-gray-300"
                 }`}
                 onClick={() => field.onChange("Investor")}
               >
                 <Wallet
                   className={`w-6 h-6 mb-2 ${
                     field.value === "Investor"
-                      ? "text-purple-200"
-                      : "text-gray-200"
+                      ? "text-purple-500"
+                      : "text-gray-500"
                   }`}
                 />
                 <h3
                   className={`font-medium   ${
                     field.value === "Investor"
-                      ? "text-purple-300"
-                      : "text-gray-200"
+                      ? "text-purple-600"
+                      : "text-gray-500"
                   }`}
                 >
                   Investor
@@ -275,8 +276,8 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
                 <p
                   className={`text-sm  ${
                     field.value === "Investor"
-                      ? "text-purple-300"
-                      : "text-gray-200"
+                      ? "text-purple-600"
+                      : "text-gray-500"
                   }`}
                 >
                   Long-term investment focus
@@ -285,23 +286,23 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               <div
                 className={`p-6 rounded-lg border cursor-pointer ${
                   field.value === "Trader"
-                    ? "border-purple-600 bg-purple-300/50 "
-                    : "border-gray-200"
+                    ? "border-purple-600 bg-purple-300/20 "
+                    : "border-gray-300"
                 }`}
                 onClick={() => field.onChange("Trader")}
               >
                 <BarChart3
                   className={`w-6 h-6 mb-2 ${
                     field.value === "Trader"
-                      ? "text-purple-200"
-                      : "text-gray-200"
+                      ? "text-purple-500"
+                      : "text-gray-500"
                   }`}
                 />
                 <h3
                   className={`font-medium   ${
                     field.value === "Trader"
-                      ? "text-purple-300"
-                      : "text-gray-200"
+                      ? "text-purple-600"
+                      : "text-gray-500"
                   }`}
                 >
                   Trader
@@ -309,8 +310,8 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
                 <p
                   className={`text-sm  ${
                     field.value === "Trader"
-                      ? "text-purple-300"
-                      : "text-gray-200"
+                      ? "text-purple-600"
+                      : "text-gray-500"
                   }`}
                 >
                   Active trading strategies
@@ -323,7 +324,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
 
       <div className="space-y-4">
         <div>
-          <Label className="text-gray-200">Risk Level</Label>
+          <Label className="text-gray-500">Risk Level</Label>
           <Controller
             name="riskLevel"
             control={control}
@@ -334,8 +335,8 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
                     key={level}
                     className={`p-4 text-center font-semibold rounded-lg border cursor-pointer ${
                       field.value === level
-                        ? "border-purple-600 bg-purple-300/50 text-purple-200"
-                        : "border-gray-200 text-gray-100"
+                        ? "border-purple-600 bg-purple-300/20 text-purple-500"
+                        : "border-gray-300 text-gray-500"
                     }`}
                     onClick={() => field.onChange(level)}
                   >
@@ -348,14 +349,17 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         </div>
 
         <div>
-          <Label className="text-gray-200">Preferred Assets</Label>
+          <Label className="text-gray-500">Preferred Assets</Label>
           <Controller
             name="cryptoAssets"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange}  value={field.value}>
-                <SelectTrigger className="mt-2  text-gray-100">
-                  <SelectValue placeholder="Select Assets" />
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger
+                  className="mt-2 border-gray-300 text-gray-500"
+                  placeholder="Select Assets"
+                >
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {SUPPORTED_ASSETS.map((asset) => (
@@ -375,7 +379,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div>
-        <Label className="text-gray-200">Minimum Investment</Label>
+        <Label className="text-gray-500">Minimum Investment</Label>
         <Controller
           name="minInvestment"
           control={control}
@@ -384,14 +388,14 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               {...field}
               type="number"
               placeholder="Enter amount"
-              className="mt-2 text-gray-200"
+              className="mt-2 text-gray-500"
             />
           )}
         />
       </div>
 
       <div>
-        <Label className="text-gray-200">Maximum Loss Tolerance (%)</Label>
+        <Label className="text-gray-500">Maximum Loss Tolerance (%)</Label>
         <Controller
           name="maxLossTolerance"
           control={control}
@@ -414,7 +418,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
       </div>
 
       <div>
-        <Label className="text-gray-200">Expected Return (%)</Label>
+        <Label className="text-gray-500">Expected Return (%)</Label>
         <Controller
           name="expectedReturn"
           control={control}
@@ -427,7 +431,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
                 value={[field.value]}
                 onValueChange={([value]) => field.onChange(value)}
               />
-              <span className="text-sm text-gray-200 font-semibold">{field.value}%</span>
+              <span className="text-sm text-gray-500 font-semibold">{field.value}%</span>
             </div>
           )}
         />
@@ -435,48 +439,43 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     </div>
   );
 
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div>
-        <Label className="text-gray-200 font-semibold">Trading Strategy</Label>
-        <Controller
-          name="tradingStrategy"
-          control={control}
-          render={({ field }) => (
-            <Textarea
-              {...field}
-              placeholder="Describe your preferred trading strategy"
-              className="mt-2 min-h-[100px] text-gray-200  focus:ring-0"
-            />
-          )}
-        />
-      </div>
-      <div>
-        <Label className="text-gray-200 font-semibold">Additional Notes</Label>
-        <Controller
-          name="additionalNotes"
-          control={control}
-          render={({ field }) => (
-            <Textarea
-              {...field}
-              placeholder="Any additional preferences or requirements"
-              className="mt-2 min-h-[100px] text-gray-200"
-            />
-          )}
-        />
-      </div>
+const renderStep3 = () => (
+  <div className="space-y-6">
+    <div>
+      <Label className="text-gray-500 font-semibold mb-2">Trading Strategy</Label>
+      <Controller
+        name="tradingStrategy"
+        control={control}
+        render={({ field }) => (
+          <TradingStrategyForm onChange={field.onChange}  />
+        )}
+      />
     </div>
-  );
-
+    <div>
+      <Label className="text-gray-500 font-semibold">Additional Notes</Label>
+      <Controller
+        name="additionalNotes"
+        control={control}
+        render={({ field }) => (
+          <Textarea
+            {...field}
+            placeholder="Any additional preferences or requirements"
+            className="mt-2 min-h-[100px] text-gray-500"
+          />
+        )}
+      />
+    </div>
+  </div>
+);
   return (
-    <div className="w-full max-w-2xl mx-auto bg-transparent">
+    <div className="w-full max-w-4xl mx-auto bg-transparent pt-[2rem]">
       <div className="mb-8">
         <div className="flex justify-between items-center">
           {[
             { step: 1, icon: Wallet, label: "Basic Info" },
             { step: 2, icon: Target, label: "Investment Preferences" },
             { step: 3, icon: BarChart3, label: "Strategy" },
-          ].map(({ step, icon: Icon, label }) => (
+          ].map(({ step, icon: Icon }) => (
             <div key={step} className="flex items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -487,7 +486,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               </div>
               {step < 3 && (
                 <div
-                  className={`w-64 h-1 mx-2 ${
+                  className={` w-80 h-1 mx-8 ${
                     currentStep > step ? "bg-purple-600" : "bg-gray-200"
                   }`}
                 />
@@ -495,14 +494,14 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
             </div>
           ))}
         </div>
-        <div className="flex justify-between mt-2 text-sm text-gray-200 font-semibold">
+        <div className="flex justify-between mt-2 text-sm text-gray-500 font-semibold">
           <span>Basic Info</span>
           <span>Investment Preferences</span>
           <span>Strategy</span>
         </div>
       </div>
 
-      <Card className="backdrop-blur-md bg-white/20 dark:bg-black/30 border border-white/20 shadow-lg">
+      <Card className="backdrop-blur-md bg-white/20 dark:bg-black/30 border border-white/20 shadow-xl">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)}>
             {currentStep === 1 && renderStep1()}

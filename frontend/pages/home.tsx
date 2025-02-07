@@ -1,38 +1,17 @@
 import Navbar from '@/components/navbar';
 import React from 'react'
-import { motion } from "motion/react";
-import ColourfulText from '@/components/ui/colourful-text';
 import { AuroraText } from '@/components/ui/aurora-text';
 import { TypingAnimation } from '@/components/ui/typing-animation';
-import { BeamAnimation } from '@/components/ui/BeamAnimation';
 import { BackgroundLines } from '@/components/ui/background-lines';
 import { AnimatedGradientText } from '@/components/ui/animated-gradient-text';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { GlowingEffectCards } from '@/components/ui/GlowingEffectCards';
-import { AuroraBackground } from '@/components/ui/aurora-background';
 const HomePage = () => {
   const words =
     "Privacy-first AI-driven platform that helps you create, manage, and scale AI trading/investing strategies";
 
-  const cards = [
-    {
-      title: "Create Agent",
-      description:
-        "Build your custom AI trading agent with our intuitive interface",
-      icon: "🤖",
-    },
-    {
-      title: "Manage Strategy",
-      description: "Monitor and adjust your trading strategies in real-time",
-      icon: "📊",
-    },
-    {
-      title: "Scale Operations",
-      description: "Easily scale your successful trading strategies",
-      icon: "📈",
-    },
-  ];
+  
   return (
     <>
       <Navbar />
