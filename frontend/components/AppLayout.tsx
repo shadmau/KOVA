@@ -145,9 +145,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
-    const basePath:any = pathname.split("?")[0];
-
-const connectionKey = React.useMemo(() => basePath, [basePath]);
+  const basePath: any = pathname.split("?")[0];
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
@@ -157,10 +155,9 @@ const connectionKey = React.useMemo(() => basePath, [basePath]);
     { icon: Settings, label: "Team Settings", href: "/settings" },
   ];
 
-
   const getBreadcrumbs = (): Breadcrumb[] => {
-    const paths = basePath.split("/").filter((p:any) => p);
-    return paths.map((path:any, index:any) => {
+    const paths = basePath.split("/").filter((p: any) => p);
+    return paths.map((path: any, index: any) => {
       const href =
         "/" +
         paths.slice(0, index + 1).join("/") +
@@ -259,7 +256,6 @@ const connectionKey = React.useMemo(() => basePath, [basePath]);
       <div className="flex min-h-screen">
         <WalletConnectionManager
           shouldShowConnectDialog={!isConnected && !address}
-          key={connectionKey}
         />
         {/* Sidebar - Desktop */}
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
@@ -317,7 +313,7 @@ const connectionKey = React.useMemo(() => basePath, [basePath]);
             <div className="flex flex-1 items-center gap-4">
               <Breadcrumbs />
             </div>
-            {(address || isConnected) && <WalletStatus />}
+            {isConnected && <WalletStatus />}
           </header>
           <main className="flex-1">{children}</main>
         </div>
