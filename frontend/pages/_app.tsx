@@ -21,6 +21,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     appName: "KOVA",
     projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
     chains: [baseSepolia],
+    transports: {
+      [baseSepolia.id]: http(),
+    },
   });
 
   return (
