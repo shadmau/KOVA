@@ -3,7 +3,7 @@ import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 
 export function GlowingEffectCards() {
-    const cards:any = [
+  const cards: any = [
     {
       title: "Create Agent",
       description:

@@ -50,7 +50,7 @@ const fetchRoomCreated = async (agentId: string) => {
 };
 
 const fetchTradingStrategy = async (
-  uri: string
+  uri: string,
 ): Promise<TradingStrategy | null> => {
   try {
     const cid = uri.replace("ipfs://", "");
@@ -196,15 +196,15 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
                       agent.riskLevel === 2
                         ? "text-red-500"
                         : agent.riskLevel === 1
-                        ? "text-yellow-500"
-                        : "text-green-500"
+                          ? "text-yellow-500"
+                          : "text-green-500"
                     }
                   >
                     {agent.riskLevel === 2
                       ? "High"
                       : agent.riskLevel === "1"
-                      ? "Medium"
-                      : "Low"}{" "}
+                        ? "Medium"
+                        : "Low"}{" "}
                     Risk
                   </Badge>
                 </div>

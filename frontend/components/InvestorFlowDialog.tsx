@@ -75,7 +75,7 @@ const InvestorFlowDialog = ({
     const fetchWalletAddress = async () => {
       try {
         const response = await axios.get(
-          `https://schrank.xyz/api/secure-room/wallet/${roomId}`
+          `https://schrank.xyz/api/secure-room/wallet/${roomId}`,
         );
         if (response.data.success) {
           setWalletAddress(response.data.walletAddress);

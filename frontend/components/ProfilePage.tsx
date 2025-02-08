@@ -54,7 +54,7 @@ const fetchMints = async () => {
         }
       `,
       variables: { first: 1000, skip: 0 },
-    })
+    }),
   );
   return response?.data?.data || { transfers: [] };
 };
@@ -72,14 +72,14 @@ const fetchRoomJoins = async (agentId: any) => {
         }
       `,
       variables: { agentId },
-    })
+    }),
   );
   return response?.data?.data || { roomJoineds: [] };
 };
 
 const fetchRoomActions = async (roomId: any) => {
   const response = await safeApiCall(() =>
-    axios.get(`https://schrank.xyz/api/secure-room/actions/${roomId}`)
+    axios.get(`https://schrank.xyz/api/secure-room/actions/${roomId}`),
   );
   return response?.data || { transactions: [] };
 };
@@ -168,7 +168,7 @@ const ProfilePage = () => {
       const userTokens = mintsData.transfers
         .filter(
           (transfer: any) =>
-            transfer.to.toLowerCase() === address?.toLowerCase()
+            transfer.to.toLowerCase() === address?.toLowerCase(),
         )
         .map((transfer: any) => BigInt(transfer.tokenId));
       setTokenIds(userTokens);
@@ -267,7 +267,7 @@ const ProfilePage = () => {
                       {new Date(tx.timestamp).toLocaleString()}
                     </TableCell>
                   </TableRow>
-                ))
+                )),
               )}
             </TableBody>
           </Table>

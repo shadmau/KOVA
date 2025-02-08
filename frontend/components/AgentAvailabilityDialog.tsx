@@ -29,7 +29,7 @@ const AgentAvailabilityDialog: React.FC<AgentAvailabilityDialogProps> = ({
 }) => {
   const [approveHash, setApproveHash] = useState<`0x${string}` | null>(null);
   const [createRoomHash, setCreateRoomHash] = useState<`0x${string}` | null>(
-    null
+    null,
   );
   const { writeContractAsync } = useWriteContract();
 
