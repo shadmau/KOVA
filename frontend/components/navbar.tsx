@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { RainbowButton } from "./ui/rainbow-button";
-import { NavbarDock } from "./ui/FloatingDock";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const Navbar = () => {
