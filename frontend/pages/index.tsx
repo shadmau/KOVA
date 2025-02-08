@@ -30,7 +30,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 
     return {
       props: {},
-      redirect: { destination: "/dashboard", permanent: false },
+      redirect: { destination: "/createAgent", permanent: false },
     };
   } catch (error) {
     return { props: {} };
@@ -40,7 +40,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useLogin({
-    onComplete: () => router.push("/dashboard"),
+    onComplete: () => router.push("/createAgent"),
   });
     const words =
       "Privacy-first AI-driven platform that helps you create, manage, and scale AI trading/investing strategies";
@@ -53,7 +53,7 @@ export default function LoginPage() {
       </Head>
 
       <main className="min-h-screen w-screen">
-        <Navbar onClickHandler={login} />{" "}
+        <Navbar onClickHandler={login} />
         <div className="min-h-screen">
           {/* Hero Section */}
           <div className="relative">
@@ -87,45 +87,17 @@ export default function LoginPage() {
             </BackgroundLines>
           </div>
 
-          {/* Features Section with new gradient background */}
-          <div className="relative">
-            {/* New gradient background */}
-            <div className="absolute inset-0">
-              {/* Main gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-purple-50/80 to-pink-50/80" />
-
-              {/* Dot pattern overlay */}
-              <div
-                className="absolute inset-0 opacity-[0.2]"
-                style={{
-                  backgroundImage: `radial-gradient(#6B7280 0.5px, transparent 0.5px)`,
-                  backgroundSize: "14px 14px",
-                }}
-              />
-
-              {/* Animated gradient blobs */}
-              <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-                <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-                <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-pink-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
-              </div>
-
-              {/* Subtle gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white/20 backdrop-blur-[2px]" />
+          {/* Features Section with glass morphism effect */}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center mb-12">
+              <AnimatedGradientText>
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                  Powerful Features for Smart Trading
+                </h2>
+              </AnimatedGradientText>
             </div>
-
-            {/* Content */}
-            <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-              <div className="text-center mb-12">
-                <AnimatedGradientText>
-                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Powerful Features for Smart Trading
-                  </h2>
-                </AnimatedGradientText>
-              </div>
-              <div className="mt-10">
-                <GlowingEffectCards />
-              </div>
+            <div className="mt-10">
+              <GlowingEffectCards />
             </div>
           </div>
         </div>

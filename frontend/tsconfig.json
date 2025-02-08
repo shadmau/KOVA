@@ -5,6 +5,7 @@
     "@tsconfig/next/tsconfig"
   ],
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "declaration": true,
     "sourceMap": true,
