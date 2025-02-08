@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useAccount, useDisconnect, useEnsName } from "wagmi";
 import WalletConnectionManager from "./WalletConnectionManager";
+import { RoomProvider } from "@/context/room";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -54,7 +55,7 @@ const WalletStatus = () => {
   const [copied, setCopied] = React.useState(false);
 
   const shortenAddress = (addr: any) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    return `${addr?.slice(0, 6)}...${addr?.slice(-4)}`;
   };
 
   const copyAddress = () => {
@@ -105,7 +106,7 @@ const WalletStatus = () => {
                   onClick={() =>
                     window.open(
                       `https://sepolia.basescan.org/address/${address}`,
-                      "_blank",
+                      "_blank"
                     )
                   }
                 >
@@ -142,9 +143,11 @@ const WalletStatus = () => {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobileOpen, setIsMobileOpen] = React.useState<boolean>(false);
   const pathname = usePathname();
-
+  const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
+    const basePath:any = pathname.split("?")[0];
 
+const connectionKey = React.useMemo(() => basePath, [basePath]);
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
@@ -154,10 +157,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { icon: Settings, label: "Team Settings", href: "/settings" },
   ];
 
+
   const getBreadcrumbs = (): Breadcrumb[] => {
-    const paths = pathname.split("/").filter((p) => p);
-    return paths.map((path, index) => {
-      const href = "/" + paths.slice(0, index + 1).join("/");
+    const paths = basePath.split("/").filter((p:any) => p);
+    return paths.map((path:any, index:any) => {
+      const href =
+        "/" +
+        paths.slice(0, index + 1).join("/") +
+        (index === paths.length - 1
+          ? searchParams.toString()
+            ? `?${searchParams.toString()}`
+            : ""
+          : "");
       const label = path.charAt(0).toUpperCase() + path.slice(1);
       return { href, label };
     });
@@ -244,68 +255,74 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <WalletConnectionManager
-        shouldShowConnectDialog={!isConnected && !address}
-      />
-      {/* Sidebar - Desktop */}
-      <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center border-b px-4">
-            <Link href="/" className="flex items-center gap-2 pl-4">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                KOVA
-              </span>
-            </Link>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-4 text-sm font-medium">
-              <div className="my-4 space-y-1">
-                {menuItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </div>
-            </nav>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Trigger */}
-      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="lg:hidden">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+    <RoomProvider>
+      <div className="flex min-h-screen">
+        <WalletConnectionManager
+          shouldShowConnectDialog={!isConnected && !address}
+          key={connectionKey}
+        />
+        {/* Sidebar - Desktop */}
+        <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <div className="flex h-full flex-col">
-            <div className="flex h-14 items-center border-b px-4">
-              <Link href="/" className="flex items-center gap-2 font-semibold">
-                <span className="text-xl">KOVA</span>
+            <div className="flex h-16 items-center border-b px-4">
+              <Link href="/" className="flex items-center gap-2 pl-4">
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  KOVA
+                </span>
               </Link>
             </div>
-            <nav className="grid flex-1 items-start px-4 text-sm font-medium">
-              <div className=" space-y-1">
-                {menuItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </div>
-            </nav>
+            <div className="flex-1 overflow-auto py-2">
+              <nav className="grid items-start px-4 text-sm font-medium">
+                <div className="my-4 space-y-1">
+                  {menuItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+                </div>
+              </nav>
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </aside>
 
-      {/* Main Content */}
-      <div className="flex-1">
-        <header className="flex h-16 items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
-          <div className="flex flex-1 items-center gap-4">
-            <Breadcrumbs />
-          </div>
-          {isConnected && <WalletStatus />}
-        </header>
-        <main className="flex-1">{children}</main>
+        {/* Mobile Trigger */}
+        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="lg:hidden">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            <div className="flex h-full flex-col">
+              <div className="flex h-14 items-center border-b px-4">
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 font-semibold"
+                >
+                  <span className="text-xl">KOVA</span>
+                </Link>
+              </div>
+              <nav className="grid flex-1 items-start px-4 text-sm font-medium">
+                <div className=" space-y-1">
+                  {menuItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+                </div>
+              </nav>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Main Content */}
+        <div className="flex-1">
+          <header className="flex h-16 items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
+            <div className="flex flex-1 items-center gap-4">
+              <Breadcrumbs />
+            </div>
+            {(address || isConnected) && <WalletStatus />}
+          </header>
+          <main className="flex-1">{children}</main>
+        </div>
       </div>
-    </div>
+    </RoomProvider>
   );
 };
 

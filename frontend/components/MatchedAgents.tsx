@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import request from "graphql-request";
-import { Search, Filter, ArrowLeft, Target, Wallet } from "lucide-react";
+import { Search, Filter, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,10 +10,8 @@ import agentNftAbi from "../lib/contractAbis/AgentNFT.json";
 
 import agentRoomAbi from "../lib/contractAbis/AgentRoom.json";
 import { useReadContracts } from "wagmi";
-import { formatEther } from "viem";
 import type { Abi } from "viem";
 import { useSearchParams } from "next/navigation";
-import { ethers } from "ethers";
 import InvestorFlowDialog from "./InvestorFlowDialog";
 
 interface Transfer {
@@ -63,10 +61,12 @@ const MatchedAgents = () => {
   const [agentRoomMapping, setAgentRoomMapping] = useState<Map<string, string>>(
     new Map(),
   );
-  const searchParams = useSearchParams();
+
+    const searchParams = useSearchParams();
   const maxInvestment = parseFloat(searchParams.get("maxInvestment") || "0");
   const riskLevel = parseInt(searchParams.get("riskLevel") || "0");
   const investorTokenId = parseInt(searchParams.get("tokenId") || "1");
+
 
   const calculateMatchPercentage = (
     minInvestment: any,
@@ -87,13 +87,13 @@ const MatchedAgents = () => {
 
     return agents.filter((agent: any) => {
       console.log(
-        Number(ethers.parseUnits(agent.investmentAmount, 18)),
+        agent.investmentAmount,
         maxInvestment,
         agent.riskLevel,
-        riskLevel,
+        riskLevel
       );
       const meetsInvestmentCriteria = maxInvestment
-        ? Number(ethers.parseUnits(agent.investmentAmount, 18)) <= maxInvestment
+        ? Number(agent.investmentAmount) <= maxInvestment
         : true;
 
       const meetsRiskCriteria = riskLevel
@@ -244,7 +244,7 @@ const MatchedAgents = () => {
           description,
           model,
           riskLevel,
-          investmentAmount: formatEther(investmentAmount),
+          investmentAmount: Number(investmentAmount),
           preferredAssets,
           agentType,
           roomId: roomId || null,
@@ -316,17 +316,7 @@ const MatchedAgents = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex items-center mb-6">
-        <Button
-          variant="ghost"
-          className="mr-4"
-          onClick={() => window.history.back()}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Agent Creation
-        </Button>
-      </div>
+    <div className="max-w-5xl mx-auto p-6">
 
       <h1 className="text-2xl font-bold mb-2">Matched Agents</h1>
       <p className="text-gray-500 mb-6">
@@ -416,7 +406,7 @@ const MatchedAgents = () => {
                         Min Investment
                       </div>
                       <div className="font-semibold">
-                        {agent.investmentAmount} ETH
+                        {agent.investmentAmount} USDT
                       </div>
                     </div>
                     <div>

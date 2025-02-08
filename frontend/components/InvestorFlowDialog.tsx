@@ -19,6 +19,7 @@ import agentRoomAbi from "@/lib/contractAbis/AgentRoom.json";
 import axios from "axios";
 import { toast } from "sonner";
 import { parseEther } from "viem";
+import { useRoom } from "@/context/room";
 
 const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
@@ -33,6 +34,7 @@ const InvestorFlowDialog = ({
   maxInvestment,
 }: any) => {
   const [step, setStep] = useState(1);
+  const { setCurrentRoomId } = useRoom();
   const [walletAddress, setWalletAddress] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +77,7 @@ const InvestorFlowDialog = ({
     const fetchWalletAddress = async () => {
       try {
         const response = await axios.get(
-          `https://schrank.xyz/api/secure-room/wallet/${roomId}`,
+          `https://schrank.xyz/api/secure-room/wallet/${roomId}`
         );
         if (response.data.success) {
           setWalletAddress(response.data.walletAddress);
@@ -111,7 +113,7 @@ const InvestorFlowDialog = ({
     if (isJoinRoomSuccess) {
       toast.success("Successfully joined the room");
       setShowSecureRoomSetup(true);
-
+      setCurrentRoomId(roomId);
       setTimeout(() => {
         setShowSecureRoomSetup(false);
         setShowProgressBar(true);
