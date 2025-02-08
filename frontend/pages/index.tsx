@@ -1,8 +1,7 @@
 import Navbar from "@/components/navbar";
-import { useLogin } from "@privy-io/react-auth";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import React from "react";
+import React, { useEffect } from "react";
 import { AuroraText } from "@/components/ui/aurora-text";
 import { TypingAnimation } from "@/components/ui/typing-animation";
 import { BackgroundLines } from "@/components/ui/background-lines";
@@ -10,12 +9,17 @@ import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { GlowingEffectCards } from "@/components/ui/GlowingEffectCards";
+import { useAccount } from "wagmi";
 
 export default function LoginPage() {
+ const { isConnected } = useAccount();
   const router = useRouter();
-  const { login } = useLogin({
-    onComplete: () => router.push("/createAgent"),
-  });
+ useEffect(() => {
+   if (isConnected) {
+     router.push("/createAgent");
+   }
+ }, [isConnected, router]);
+
 
   const words =
     "Privacy-first AI-driven platform that helps you create, manage, and scale AI trading/investing strategies";
@@ -23,11 +27,11 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Login · Privy</title>
+        <title>KOVA</title>
       </Head>
 
       <main className="min-h-screen w-screen">
-        <Navbar onClickHandler={login} />
+        <Navbar/>
         <div className="min-h-screen">
           {/* Hero Section */}
           <div className="relative">

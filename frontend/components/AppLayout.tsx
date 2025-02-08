@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -45,7 +46,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
-    { icon: BarChart2, label: "Dashboard", href: "/dashboard" },
+    { icon: BarChart2, label: "Profile", href: "/profile" },
     { icon: Shield, label: "Agents", href: "/agents" },
     { icon: CreditCard, label: "Payment", href: "/payment" },
     { icon: Settings, label: "Team Settings", href: "/settings" },
@@ -214,6 +215,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Button>
             <Breadcrumbs />
           </div>
+          <ConnectButton chainStatus="name" />
         </header>
         <main className="flex-1">{children}</main>
       </div>
