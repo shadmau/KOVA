@@ -159,12 +159,10 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     isError: confirmError,
-  } = txHash
-    ? useWaitForTransactionReceipt({
-        hash: txHash as `0x${string}`,
-        confirmations: 1,
-      })
-    : { isLoading: false, isSuccess: false, isError: false };
+  } = useWaitForTransactionReceipt({
+    hash: txHash as `0x${string}`,
+    confirmations: 1,
+  });
 
   useEffect(() => {
     if (txHash) {

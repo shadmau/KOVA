@@ -18,6 +18,7 @@ import contractAbi from "@/lib/contractAbis/AgentNFT.json";
 import agentRoomAbi from "@/lib/contractAbis/AgentRoom.json";
 import axios from "axios";
 import { toast } from "sonner";
+import { parseEther } from "viem";
 
 const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
@@ -40,8 +41,7 @@ const InvestorFlowDialog = ({
   const [joinRoomHash, setJoinRoomHash] = useState("");
   const [showSecureRoomSetup, setShowSecureRoomSetup] = useState(false);
   const [showProgressBar, setShowProgressBar] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes in seconds
-
+  const [timeRemaining, setTimeRemaining] = useState(120);
   const { address } = useAccount();
   const { writeContractAsync } = useWriteContract();
 
@@ -111,6 +111,7 @@ const InvestorFlowDialog = ({
     if (isJoinRoomSuccess) {
       toast.success("Successfully joined the room");
       setShowSecureRoomSetup(true);
+
       setTimeout(() => {
         setShowSecureRoomSetup(false);
         setShowProgressBar(true);
@@ -137,7 +138,7 @@ const InvestorFlowDialog = ({
       if (timer) clearInterval(timer);
     };
   }, [showProgressBar, timeRemaining, onClose]);
-
+  console.log("max inv", parseEther(maxInvestment.toString()));
   const handleTransfer = async () => {
     try {
       setIsLoading(true);
@@ -165,12 +166,16 @@ const InvestorFlowDialog = ({
           },
         ],
         functionName: "transfer",
-        args: [walletAddress as `0x${string}`, BigInt(maxInvestment)],
+        args: [
+          walletAddress as `0x${string}`,
+          parseEther(maxInvestment.toString()),
+        ],
       });
 
       setTransferHash(tx);
       toast.success("Transfer initiated");
     } catch (err: any) {
+      console.log(err);
       setError(err.message);
     } finally {
       setIsLoading(false);
