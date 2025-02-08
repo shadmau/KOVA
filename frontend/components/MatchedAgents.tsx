@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import request from "graphql-request";
 import { Search, Filter, ArrowLeft, Target, Wallet } from "lucide-react";
@@ -22,17 +22,6 @@ interface Transfer {
   to: string;
 }
 
-interface AgentData {
-  id: string;
-  tokenId: string;
-  name: string;
-  description: string;
-  model: string;
-  riskLevel: number;
-  investmentAmount: string;
-  preferredAssets: string[];
-  agentType: number;
-}
 
 const FETCH_MINTS = gql`
   query FetchMints($first: Int, $skip: Int) {

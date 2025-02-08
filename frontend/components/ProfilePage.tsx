@@ -11,18 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, ExternalLink, Users, Activity, Clock } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import axios from "axios";
 
 import agentNftAbi from "@/lib/contractAbis/AgentNFT.json";
-import agentRoomAbi from "@/lib/contractAbis/AgentRoom.json";
 import { Abi } from "viem";
 import AgentCard from "./AgentCard";
 
 const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
-const ROOM_ADDRESS = process.env
-  .NEXT_PUBLIC_ROOM_AGENT_CONTRACT_ADDRESS as `0x${string}`;
 
 const SUBGRAPH_URL =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL || "YOUR_SUBGRAPH_URL";

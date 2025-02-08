@@ -43,7 +43,7 @@ export class PinataService {
   static async getJSON(ipfsHash: string): Promise<any> {
     try {
       this.initialize();
-      const response = await this.pinata.gateways.get(ipfsHash);
+      const response:any = await this.pinata.gateways.get(ipfsHash);
 
       if (response.ok) {
         const data = await response.json();

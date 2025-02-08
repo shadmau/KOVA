@@ -13,7 +13,6 @@ import AgentAvailabilityDialog from "./AgentAvailabilityDialog";
 import { useReadContracts } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Abi } from "viem";
 
 const ROOM_ADDRESS = process.env
   .NEXT_PUBLIC_ROOM_AGENT_CONTRACT_ADDRESS as `0x${string}`;

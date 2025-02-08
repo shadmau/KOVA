@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
-  useWatchContractEvent,
   usePublicClient,
 } from "wagmi";
 import { Controller, useForm } from "react-hook-form";
@@ -34,14 +33,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { IPFSService } from "@/lib/ipfs";
 import { RainbowButton } from "./ui/rainbow-button";
 import TradingStrategyForm from "./TradingStrategyForm";
 import { PinataService } from "@/lib/pinata";
-import request, { gql } from "graphql-request";
-import { useQuery } from "@tanstack/react-query";
 import AgentAvailabilityDialog from "./AgentAvailabilityDialog";
-import { parseAbiItem } from "viem";
 
 const SUPPORTED_ASSETS = [
   "BTC",
@@ -147,25 +142,6 @@ interface FormData {
   tradingGoals: string; // Add this field
 }
 
-const FETCH_MINTS = gql`
-  query FetchMints($first: Int, $skip: Int, $hash: String!) {
-    transfers(
-      first: $first
-      skip: $skip
-      where: {
-        from: "0x0000000000000000000000000000000000000000"
-        transactionHash_contains: $hash
-      }
-      orderDirection: desc
-    ) {
-      id
-      tokenId
-      to
-    }
-  }
-`;
-const SUBGRAPH_URL =
-  process.env.NEXT_PUBLIC_SUBGRAPH_URL || "YOUR_SUBGRAPH_URL";
 
 const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -300,8 +276,6 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         setTxStatus("error");
         return;
       }
-
-      const placeholderImageURI = "/api/placeholder/400/400";
 
       if (!writeContractAsync) {
         throw new Error("Write contract not initialized");
