@@ -256,7 +256,7 @@ const ProfilePage = () => {
                         rel="noopener noreferrer"
                         className="flex items-center text-blue-500 hover:text-blue-600"
                       >
-                        {tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)}
+                        {tx?.txHash?.slice(0, 6)}...{tx?.txHash?.slice(-4)}
                         <ExternalLink className="ml-1 h-4 w-4" />
                       </a>
                     </TableCell>
