@@ -1,9 +1,7 @@
 import Navbar from "@/components/navbar";
 import { useLogin } from "@privy-io/react-auth";
-import { PrivyClient } from "@privy-io/server-auth";
-import { GetServerSideProps } from "next";
-import Head from "next/head";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import React from "react";
 import { AuroraText } from "@/components/ui/aurora-text";
 import { TypingAnimation } from "@/components/ui/typing-animation";
@@ -12,39 +10,15 @@ import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { GlowingEffectCards } from "@/components/ui/GlowingEffectCards";
-export const getServerSideProps: GetServerSideProps = async ({ req }) => {
-  const cookieAuthToken = req.cookies["privy-token"];
-
-  // If no cookie is found, skip any further checks
-  if (!cookieAuthToken) return { props: {} };
-
-  const PRIVY_APP_ID = "cm6p9sea5014u11te91f104gi";
-  const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;
-  const client = new PrivyClient(PRIVY_APP_ID!, PRIVY_APP_SECRET!);
-
-  try {
-    const claims = await client.verifyAuthToken(cookieAuthToken);
-    // Use this result to pass props to a page for server rendering or to drive redirects!
-    // ref https://nextjs.org/docs/pages/api-reference/functions/get-server-side-props
-    console.log({ claims });
-
-    return {
-      props: {},
-      redirect: { destination: "/createAgent", permanent: false },
-    };
-  } catch (error) {
-    return { props: {} };
-  }
-};
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useLogin({
     onComplete: () => router.push("/createAgent"),
   });
-    const words =
-      "Privacy-first AI-driven platform that helps you create, manage, and scale AI trading/investing strategies";
 
+  const words =
+    "Privacy-first AI-driven platform that helps you create, manage, and scale AI trading/investing strategies";
 
   return (
     <>
