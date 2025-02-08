@@ -5,28 +5,28 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: AgentRoom
+    name: AIAgentRoom
     network: base-sepolia
     source:
-      address: "0x9527E6CFd6d73f0c241f6D15e39C7EaA7C88Bd04"
-      abi: AgentRoom
-      startBlock: 21582367
+      address: "0x61eCe590C38F8B50d69131b71c9Acbf0dC9b7979"
+      abi: AIAgentRoom
+      startBlock: 21591300
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - RoomCreated
-        - RoomFull
+        - RoomJoined
         - RoomLeft
       abis:
-        - name: AgentRoom
-          file: ./abis/AgentRoom.json
+        - name: AIAgentRoom
+          file: ./abis/AIAgentRoom.json
       eventHandlers:
-        - event: RoomCreated(uint256,uint8,uint256)
+        - event: RoomCreated(uint256,uint256)
           handler: handleRoomCreated
-        - event: RoomFull(uint256,uint8,uint256[])
-          handler: handleRoomFull
-        - event: RoomLeft(uint256,uint8,uint256)
+        - event: RoomJoined(uint256,uint256)
+          handler: handleRoomJoined
+        - event: RoomLeft(uint256,uint256)
           handler: handleRoomLeft
-      file: ./src/agent-room.ts
+      file: ./src/ai-agent-room.ts

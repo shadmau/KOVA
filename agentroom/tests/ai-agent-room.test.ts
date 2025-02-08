@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { BigInt } from "@graphprotocol/graph-ts"
 import { RoomCreated } from "../generated/schema"
-import { RoomCreated as RoomCreatedEvent } from "../generated/AgentRoom/AgentRoom"
-import { handleRoomCreated } from "../src/agent-room"
-import { createRoomCreatedEvent } from "./agent-room-utils"
+import { RoomCreated as RoomCreatedEvent } from "../generated/AIAgentRoom/AIAgentRoom"
+import { handleRoomCreated } from "../src/ai-agent-room"
+import { createRoomCreatedEvent } from "./ai-agent-room-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -18,9 +18,8 @@ import { createRoomCreatedEvent } from "./agent-room-utils"
 describe("Describe entity assertions", () => {
   beforeAll(() => {
     let roomId = BigInt.fromI32(234)
-    let roomType = 123
-    let agentID = BigInt.fromI32(234)
-    let newRoomCreatedEvent = createRoomCreatedEvent(roomId, roomType, agentID)
+    let agentId = BigInt.fromI32(234)
+    let newRoomCreatedEvent = createRoomCreatedEvent(roomId, agentId)
     handleRoomCreated(newRoomCreatedEvent)
   })
 
@@ -44,13 +43,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "RoomCreated",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "roomType",
-      "123"
-    )
-    assert.fieldEquals(
-      "RoomCreated",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "agentID",
+      "agentId",
       "234"
     )
 

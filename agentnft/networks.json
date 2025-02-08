@@ -2,7 +2,7 @@
   "base-sepolia": {
     "AgentNFT": {
       "address": "0xEF78E7D23A02a404D348a0f37ac0fF4D10991D1a",
-      "startBlock": 21579149
+      "startBlock": 21591300
     }
   }
 }

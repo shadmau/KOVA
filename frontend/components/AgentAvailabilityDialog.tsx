@@ -19,7 +19,8 @@ interface AgentAvailabilityDialogProps {
   contractAddress: string;
   onClose: () => void;
 }
-
+const ROOM_ADDRESS = process.env
+  .NEXT_PUBLIC_ROOM_AGENT_CONTRACT_ADDRESS as `0x${string}`;
 const AgentAvailabilityDialog: React.FC<AgentAvailabilityDialogProps> = ({
   isOpen,
   tokenId,
@@ -34,13 +35,13 @@ const AgentAvailabilityDialog: React.FC<AgentAvailabilityDialogProps> = ({
 
   const { isSuccess: isApproveSuccess, isError: isApproveError } =
     useWaitForTransactionReceipt({
-      hash: approveHash,
+      hash: approveHash as `0x${string}`,
       confirmations: 1,
     });
 
   const { isSuccess: isCreateRoomSuccess, isError: isCreateRoomError } =
     useWaitForTransactionReceipt({
-      hash: createRoomHash,
+      hash: createRoomHash as `0x${string}`,
       confirmations: 1,
     });
 
@@ -51,21 +52,22 @@ const AgentAvailabilityDialog: React.FC<AgentAvailabilityDialogProps> = ({
         address: contractAddress as `0x${string}`,
         functionName: "approve",
         abi: contractAbi,
-        args: ["0x9527E6CFd6d73f0c241f6D15e39C7EaA7C88Bd04", tokenId],
+        args: [ROOM_ADDRESS, tokenId],
       });
       setApproveHash(approveResult);
 
       if (isAvailable) {
         // Create room if agent is to be made available
         const createRoomResult = await writeContractAsync({
-          address: "0x9527E6CFd6d73f0c241f6D15e39C7EaA7C88Bd04",
+          address: ROOM_ADDRESS,
           abi: agentRoomAbi,
           functionName: "createRoom",
-          args: [0, tokenId],
+          args: [tokenId],
         });
         setCreateRoomHash(createRoomResult);
       }
     } catch (error) {
+      console.log(error);
       toast.error("Error processing agent availability");
       onClose();
     }

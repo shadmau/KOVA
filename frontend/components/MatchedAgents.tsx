@@ -12,6 +12,9 @@ import agentRoomAbi from "../lib/contractAbis/AgentRoom.json";
 import { useReadContracts } from "wagmi";
 import { formatEther } from "viem";
 import type { Abi } from "viem";
+import { useSearchParams } from "next/navigation";
+import { ethers } from "ethers";
+import InvestorFlowDialog from "./InvestorFlowDialog";
 
 interface Transfer {
   id: string;
@@ -48,19 +51,16 @@ const FETCH_MINTS = gql`
 
 const FETCH_ROOMS = gql`
   query FetchRooms {
-    roomCreateds(first: 100) {
+    roomCreateds(first: 1000, orderBy: roomId) {
       id
-      agentID
-    }
-    roomFulls(first: 100) {
-      id
-      agentIDs
+      roomId
+      agentId
     }
   }
 `;
 const CONTRACT_ADDRESS = process.env
-    .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
-  const ROOM_ADDRESS = process.env
+  .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
+const ROOM_ADDRESS = process.env
   .NEXT_PUBLIC_ROOM_AGENT_CONTRACT_ADDRESS as `0x${string}`;
 const SUBGRAPH_URL =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL || "YOUR_SUBGRAPH_URL";
@@ -69,36 +69,79 @@ const SUBGRAPH_URL_FOR_ROOMS =
 const MatchedAgents = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showInvestorJoinFlow, setShowInvestorJoinFlow] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [tokenIds, setTokenIds] = useState<bigint[]>([]);
-    const [availableAgents, setAvailableAgents] = useState<string[]>([]);
-    
-     const roomsQuery = useQuery({
-       queryKey: ["rooms"],
-       queryFn: async () => {
-         const response = await request<{
-           roomCreateds: { agentID: string }[];
-           roomFulls: { agentIDs: string[] }[];
-         }>(SUBGRAPH_URL_FOR_ROOMS, FETCH_ROOMS);
+  const [agentRoomMapping, setAgentRoomMapping] = useState<Map<string, string>>(
+    new Map()
+  );
+  const searchParams = useSearchParams();
+  const maxInvestment = parseFloat(searchParams.get("maxInvestment") || "0");
+  const riskLevel = parseInt(searchParams.get("riskLevel") || "0");
+  const investorTokenId = parseInt(searchParams.get("tokenId") || "1");
 
-         // Find available agents (in created rooms but not in full rooms)
-         const createdAgentIds = new Set(
-           response.roomCreateds.map((room) => room.agentID)
-         );
-         const fullRoomAgentIds = new Set(
-           response.roomFulls.flatMap((room) => room.agentIDs)
-         );
+  const calculateMatchPercentage = (
+    minInvestment: any,
+    maxInvestmentParam: any
+  ) => {
+    if (!maxInvestmentParam) return Math.floor(Math.random() * (100 - 80) + 80);
 
-         const availableAgentIds = Array.from(createdAgentIds).filter(
-           (id) => !fullRoomAgentIds.has(id)
-         );
+    const max = parseFloat(maxInvestmentParam);
+    const min = parseFloat(minInvestment);
 
-         setAvailableAgents(availableAgentIds);
-         return availableAgentIds;
-       },
-     });
+    if (min > max) return 0;
+    const ratio = 1 - min / max;
+    return Math.floor(80 + ratio * 20);
+  };
+
+  const filterAgents = (agents: any) => {
+    if (!maxInvestment && !riskLevel) return agents;
+
+    return agents.filter((agent: any) => {
+      console.log(
+        Number(ethers.parseUnits(agent.investmentAmount, 18)),
+        maxInvestment,
+        agent.riskLevel,
+        riskLevel
+      );
+      const meetsInvestmentCriteria = maxInvestment
+        ? Number(ethers.parseUnits(agent.investmentAmount, 18)) <= maxInvestment
+        : true;
+
+      const meetsRiskCriteria = riskLevel
+        ? agent.riskLevel === riskLevel
+        : true;
+
+      return meetsInvestmentCriteria && meetsRiskCriteria;
+    });
+  };
+
+  const roomsQuery = useQuery({
+    queryKey: ["rooms"],
+    queryFn: async () => {
+      const response = await request<{
+        roomCreateds: { roomId: string; agentId: string }[];
+      }>(SUBGRAPH_URL_FOR_ROOMS, FETCH_ROOMS);
+      console.log(response);
+      // Create mapping of agent ID to room ID
+      const mapping = new Map<string, string>();
+      response.roomCreateds.forEach(({ roomId, agentId }) => {
+        mapping.set(agentId, roomId);
+      });
+
+      setAgentRoomMapping(mapping);
+      return response.roomCreateds;
+    },
+  });
+
+  const uniqueRoomIds = React.useMemo(() => {
+    return Array.from(new Set(Array.from(agentRoomMapping.values()))).map(
+      (id) => BigInt(id)
+    );
+  }, [agentRoomMapping]);
 
   // First query: Fetch all minted tokens
-  const mintsQuery = useQuery({
+  const mintsQuery: any = useQuery({
     queryKey: ["mints"],
     queryFn: async () => {
       const response = await request<{ transfers: Transfer[] }>(
@@ -115,7 +158,6 @@ const MatchedAgents = () => {
       return response.transfers;
     },
   });
- 
 
   // Second query: Read contract data for all tokens at once
   const agentDataReads = useReadContracts({
@@ -130,6 +172,7 @@ const MatchedAgents = () => {
     ),
   });
 
+  console.log(agentDataReads.data);
   // Third query: Read extra agent data
   const agentExtraDataReads = useReadContracts({
     contracts: tokenIds.map(
@@ -142,74 +185,105 @@ const MatchedAgents = () => {
         } as const)
     ),
   });
-    
 
-  // Process and combine the data
-const processedAgents = React.useMemo(() => {
-  if (!agentDataReads.data || !agentExtraDataReads.data || !mintsQuery.data)
-    return [];
+  console.log(agentExtraDataReads.data);
 
-  return agentDataReads.data
-    .map((dataResult, index) => {
-      if (dataResult.status !== "success" || !dataResult.result) return null;
+  const roomStatusReads = useReadContracts({
+    contracts: uniqueRoomIds.map((roomId) => ({
+      address: ROOM_ADDRESS,
+      abi: agentRoomAbi as Abi,
+      functionName: "viewRoomStatus",
+      args: [roomId],
+    })),
+  });
 
-      const extraDataResult = agentExtraDataReads.data[index];
-      if (extraDataResult.status !== "success" || !extraDataResult.result)
-        return null;
+  // Create a map of room statuses
+  const roomStatuses = React.useMemo(() => {
+    if (!roomStatusReads.data) return new Map<string, number>();
 
-      const [
-        name,
-        description,
-        model,
-        _userPromptURI,
-        _systemPromptURI,
-        _promptsEncrypted,
-      ] = dataResult.result as unknown as [
-        string,
-        string,
-        string,
-        string,
-        string,
-        boolean
-      ];
-
-      const [agentType, riskLevel, investmentAmount, preferredAssets] =
-        extraDataResult.result as unknown as [number, number, bigint, string[]];
-
-      if (agentType === 1) return null;
-
-      if (
-        searchQuery &&
-        !name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return null;
+    const statusMap = new Map<string, number>();
+    uniqueRoomIds.forEach((roomId, index) => {
+      const result: any = roomStatusReads.data[index];
+      if (result.status === "success") {
+        statusMap.set(roomId.toString(), Number(result.result));
       }
+    });
+    return statusMap;
+  }, [roomStatusReads.data, uniqueRoomIds]);
 
-      return {
-        id: mintsQuery.data[index].tokenId,
-        tokenId: mintsQuery.data[index].tokenId,
-        name,
-        description,
-        model,
-        riskLevel,
-        investmentAmount: formatEther(investmentAmount),
-        preferredAssets,
-        agentType,
-        isAvailable: availableAgents.includes(mintsQuery.data[index].tokenId),
-        totalTrades: 0,
-        winRate: 0,
-        avgReturn: 0,
-      };
-    })
-    .filter((agent): agent is NonNullable<typeof agent> => agent !== null);
-}, [
-  agentDataReads.data,
-  agentExtraDataReads.data,
-  mintsQuery.data,
-  roomsQuery.data,
-  availableAgents,
-  searchQuery,
-]);
+  const processedAgents = React.useMemo(() => {
+    if (!agentDataReads.data || !agentExtraDataReads.data || !mintsQuery.data)
+      return [];
+
+    const agents = agentDataReads.data
+      .map((dataResult: any, index) => {
+        if (dataResult.status !== "success" || !dataResult.result) return null;
+
+        const extraDataResult: any = agentExtraDataReads.data[index];
+        if (extraDataResult.status !== "success" || !extraDataResult.result)
+          return null;
+
+        const [name, description, model] = dataResult.result;
+        const [agentType, riskLevel, investmentAmount, preferredAssets] =
+          extraDataResult.result;
+
+        // Only process trader agents
+        if (agentType === 1) return null;
+
+        if (
+          searchQuery &&
+          !name.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return null;
+        }
+
+        const tokenId = mintsQuery.data[index].tokenId;
+        const roomId = agentRoomMapping.get(tokenId);
+
+        // Check if the agent has a room and get its status
+        let isAvailable = false;
+        if (roomId) {
+          const roomStatus = roomStatuses.get(roomId);
+          // Status 1 means the room is open
+          isAvailable = roomStatus === 0;
+          console.log(roomId, isAvailable);
+        }
+
+        return {
+          id: tokenId,
+          tokenId,
+          name,
+          description,
+          model,
+          riskLevel,
+          investmentAmount: formatEther(investmentAmount),
+          preferredAssets,
+          agentType,
+          roomId: roomId || null,
+          isAvailable,
+        };
+      })
+      .filter((agent): agent is NonNullable<typeof agent> => agent !== null);
+
+    const filteredAgents = filterAgents(agents);
+
+    return filteredAgents.map((agent: any) => ({
+      ...agent,
+      matchPercentage: calculateMatchPercentage(
+        agent.investmentAmount,
+        maxInvestment
+      ),
+    }));
+  }, [
+    agentDataReads.data,
+    agentExtraDataReads.data,
+    mintsQuery.data,
+    searchQuery,
+    maxInvestment,
+    riskLevel,
+    agentRoomMapping,
+    roomStatuses,
+  ]);
 
   const getRiskLevelLabel = (level: number) => {
     switch (level) {
@@ -224,10 +298,15 @@ const processedAgents = React.useMemo(() => {
     }
   };
 
-  const getMatchPercentage = () => {
-    return Math.floor(Math.random() * (100 - 80) + 80);
+  const handleInvestorJoinFlow = (agent: any) => {
+    setSelectedAgent(agent);
+    setShowInvestorJoinFlow(true);
   };
 
+  const handleCloseDialog = () => {
+    setShowInvestorJoinFlow(false);
+    setSelectedAgent(null);
+  };
   const isLoading =
     mintsQuery.isLoading ||
     agentDataReads.isLoading ||
@@ -239,6 +318,14 @@ const processedAgents = React.useMemo(() => {
     Boolean(agentDataReads.error) ||
     Boolean(agentExtraDataReads.error) ||
     roomsQuery.isError;
+
+  console.log(
+    mintsQuery.isError,
+    Boolean(agentDataReads.error),
+    Boolean(agentExtraDataReads.error),
+    roomsQuery.isError,
+    roomsQuery.error
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -282,9 +369,8 @@ const processedAgents = React.useMemo(() => {
             Error loading agents
           </div>
         ) : (
-          processedAgents.map((agent) => {
+          processedAgents.map((agent: any) => {
             const riskLevel = getRiskLevelLabel(agent.riskLevel);
-            const matchPercentage = getMatchPercentage();
 
             return (
               <Card
@@ -317,7 +403,7 @@ const processedAgents = React.useMemo(() => {
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <span className="text-purple-600 font-semibold">
-                          {matchPercentage}% Match
+                          {agent.matchPercentage}% Match
                         </span>
                       </div>
                       <Button
@@ -327,6 +413,7 @@ const processedAgents = React.useMemo(() => {
                             ? "opacity-50 cursor-not-allowed"
                             : ""
                         }`}
+                        onClick={() => handleInvestorJoinFlow(agent)}
                       >
                         {agent.isAvailable ? "Select Agent →" : "Not Available"}
                       </Button>
@@ -350,7 +437,8 @@ const processedAgents = React.useMemo(() => {
                       </div>
                       <div className="font-semibold">
                         {agent.preferredAssets.length > 0
-                          ? agent.preferredAssets.slice(0, 2).join(", ")
+                          ? // ? agent.preferredAssets.slice(0, 2).join(", ")
+                            "USDT"
                           : "N/A"}
                       </div>
                     </div>
@@ -367,6 +455,15 @@ const processedAgents = React.useMemo(() => {
           })
         )}
       </div>
+      {selectedAgent && (
+        <InvestorFlowDialog
+          isOpen={showInvestorJoinFlow}
+          onClose={handleCloseDialog}
+          tokenId={investorTokenId}
+          roomId={selectedAgent.roomId}
+          maxInvestment={maxInvestment}
+        />
+      )}
     </div>
   );
 };

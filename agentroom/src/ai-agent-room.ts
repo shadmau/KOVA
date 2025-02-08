@@ -1,17 +1,16 @@
 import {
   RoomCreated as RoomCreatedEvent,
-  RoomFull as RoomFullEvent,
+  RoomJoined as RoomJoinedEvent,
   RoomLeft as RoomLeftEvent
-} from "../generated/AgentRoom/AgentRoom"
-import { RoomCreated, RoomFull, RoomLeft } from "../generated/schema"
+} from "../generated/AIAgentRoom/AIAgentRoom"
+import { RoomCreated, RoomJoined, RoomLeft } from "../generated/schema"
 
 export function handleRoomCreated(event: RoomCreatedEvent): void {
   let entity = new RoomCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.roomId = event.params.roomId
-  entity.roomType = event.params.roomType
-  entity.agentID = event.params.agentID
+  entity.agentId = event.params.agentId
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -20,13 +19,12 @@ export function handleRoomCreated(event: RoomCreatedEvent): void {
   entity.save()
 }
 
-export function handleRoomFull(event: RoomFullEvent): void {
-  let entity = new RoomFull(
+export function handleRoomJoined(event: RoomJoinedEvent): void {
+  let entity = new RoomJoined(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.roomId = event.params.roomId
-  entity.roomType = event.params.roomType
-  entity.agentIDs = event.params.agentIDs
+  entity.agentId = event.params.agentId
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -40,8 +38,7 @@ export function handleRoomLeft(event: RoomLeftEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.roomId = event.params.roomId
-  entity.roomType = event.params.roomType
-  entity.agentID = event.params.agentID
+  entity.agentId = event.params.agentId
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

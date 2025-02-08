@@ -10,7 +10,7 @@ dataSources:
     source:
       address: "0xEF78E7D23A02a404D348a0f37ac0fF4D10991D1a"
       abi: AgentNFT
-      startBlock: 21587000
+      startBlock: 21591300
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

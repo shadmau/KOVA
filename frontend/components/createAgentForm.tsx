@@ -63,10 +63,9 @@ const RISK_LEVEL_MAPPING = {
 interface TransactionStatusProps {
   isOpen: boolean;
   status: "loading" | "success" | "error" | null;
-  hash?: string|null;
+  hash?: string | null;
   onClose: () => void;
 }
-
 
 const TransactionStatus = ({
   isOpen,
@@ -118,8 +117,8 @@ const TransactionStatus = ({
           </>
         )}
         {status !== "loading" && (
-          <Button 
-            onClick={status === "success" ? onDone : onClose} 
+          <Button
+            onClick={status === "success" ? onDone : onClose}
             className="mt-4"
           >
             {status === "success" ? "Done" : "Close"}
@@ -179,16 +178,17 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const { writeContractAsync } = useWriteContract();
-  const publicClient = usePublicClient();
+  const publicClient: any = usePublicClient();
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     isError: confirmError,
-  } = useWaitForTransactionReceipt({
-    hash: txHash as `0x${string}`,
-    confirmations: 1,
-    enabled: !!txHash,
-  });
+  } = txHash
+    ? useWaitForTransactionReceipt({
+        hash: txHash as `0x${string}`,
+        confirmations: 1,
+      })
+    : { isLoading: false, isSuccess: false, isError: false };
 
   useEffect(() => {
     if (txHash) {
@@ -238,15 +238,23 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   };
 
   const handleDoneOnSuccess = () => {
-    console.log(agentRole, mintedTokenId);
+    if (agentRole === "Investor" && mintedTokenId) {
+      const maxInvestValue = watch("maxInvestment");
+      const riskLevelValue = RISK_LEVEL_MAPPING[watch("riskLevel")];
+      const queryParams = new URLSearchParams({
+        maxInvestment: maxInvestValue,
+        riskLevel: riskLevelValue.toString(),
+        tokenId: mintedTokenId.toString(),
+      });
+      window.location.href = `/agents?${queryParams.toString()}`;
+    } else if (agentRole === "Trader" && mintedTokenId) {
+      setShowAvailabilityDialog(true);
+    }
 
     setTxStatus(null);
     setTxHash(null);
     reset();
     setCurrentStep(1);
-        if (agentRole === "Trader" && mintedTokenId) {
-          setShowAvailabilityDialog(true);
-        }
   };
 
   const handleCloseStatus = () => {
@@ -268,6 +276,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         ...promptData,
         maxLossTolerance: formData.maxLossTolerance,
         expectedReturn: formData.expectedReturn,
+        constraints: `maximum investment per trade: ${formData.maxInvestment} USDT`,
       };
     }
 
@@ -307,7 +316,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
             name: data.agentName,
             description: data.additionalNotes,
             model: "gpt-4",
-            userPromptURI,
+            userPromptURI: `ipfs://${userPromptURI}`,
             systemPromptURI: "",
             promptsEncrypted: false,
             riskLevel: RISK_LEVEL_MAPPING[data.riskLevel],
@@ -316,7 +325,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               agentRole === "Investor"
                 ? data.maxInvestment
                 : data.minInvestment,
-            preferredAssets: ["0xdAC17F958D2ee523a2206206994597C13D831ec7"],
+            preferredAssets: ["0xd1d6A8E7a1593e005FDBC08e978a389127277749"],
           },
         ],
       });
@@ -339,9 +348,9 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
       const receipt = await publicClient.getTransactionReceipt({
         hash: txHash as `0x${string}`,
       });
-console.log(receipt)
+      console.log(receipt);
       const transferEvent = receipt.logs.find(
-        (log) =>
+        (log: any) =>
           log.topics[0] ===
             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && // Transfer event signature
           log.topics[1] ===
@@ -359,6 +368,7 @@ console.log(receipt)
 
     getTokenId();
   }, [txHash, isConfirmed, publicClient, agentRole]);
+
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
