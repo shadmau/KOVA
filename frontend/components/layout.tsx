@@ -9,9 +9,7 @@ type Props = {
   appName: string;
 };
 
-export default function Layout({
-  children,
-}: Props) {
+export default function Layout({ children }: Props) {
   const { ready, authenticated } = usePrivy();
   const router = useRouter();
 

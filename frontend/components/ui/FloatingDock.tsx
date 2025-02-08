@@ -42,9 +42,7 @@ export function NavbarDock() {
   ];
   return (
     <div className="flex items-center justify-center h-[20rem] w-full">
-      <FloatingDock
-        items={links}
-      />
+      <FloatingDock items={links} />
     </div>
-  ); 
+  );
 }

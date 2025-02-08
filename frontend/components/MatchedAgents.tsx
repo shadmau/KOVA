@@ -22,7 +22,6 @@ interface Transfer {
   to: string;
 }
 
-
 const FETCH_MINTS = gql`
   query FetchMints($first: Int, $skip: Int) {
     transfers(
@@ -62,7 +61,7 @@ const MatchedAgents = () => {
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [tokenIds, setTokenIds] = useState<bigint[]>([]);
   const [agentRoomMapping, setAgentRoomMapping] = useState<Map<string, string>>(
-    new Map()
+    new Map(),
   );
   const searchParams = useSearchParams();
   const maxInvestment = parseFloat(searchParams.get("maxInvestment") || "0");
@@ -71,7 +70,7 @@ const MatchedAgents = () => {
 
   const calculateMatchPercentage = (
     minInvestment: any,
-    maxInvestmentParam: any
+    maxInvestmentParam: any,
   ) => {
     if (!maxInvestmentParam) return Math.floor(Math.random() * (100 - 80) + 80);
 
@@ -91,7 +90,7 @@ const MatchedAgents = () => {
         Number(ethers.parseUnits(agent.investmentAmount, 18)),
         maxInvestment,
         agent.riskLevel,
-        riskLevel
+        riskLevel,
       );
       const meetsInvestmentCriteria = maxInvestment
         ? Number(ethers.parseUnits(agent.investmentAmount, 18)) <= maxInvestment
@@ -125,7 +124,7 @@ const MatchedAgents = () => {
 
   const uniqueRoomIds = React.useMemo(() => {
     return Array.from(new Set(Array.from(agentRoomMapping.values()))).map(
-      (id) => BigInt(id)
+      (id) => BigInt(id),
     );
   }, [agentRoomMapping]);
 
@@ -139,7 +138,7 @@ const MatchedAgents = () => {
         {
           first: 100,
           skip: 0,
-        }
+        },
       );
 
       const ids = response.transfers.map((t) => BigInt(t.tokenId));
@@ -157,7 +156,7 @@ const MatchedAgents = () => {
           abi: agentNftAbi as Abi,
           functionName: "getAgentData",
           args: [tokenId],
-        } as const)
+        }) as const,
     ),
   });
 
@@ -171,7 +170,7 @@ const MatchedAgents = () => {
           abi: agentNftAbi as Abi,
           functionName: "getAgentExtraData",
           args: [tokenId],
-        } as const)
+        }) as const,
     ),
   });
 
@@ -260,7 +259,7 @@ const MatchedAgents = () => {
       ...agent,
       matchPercentage: calculateMatchPercentage(
         agent.investmentAmount,
-        maxInvestment
+        maxInvestment,
       ),
     }));
   }, [
@@ -313,7 +312,7 @@ const MatchedAgents = () => {
     Boolean(agentDataReads.error),
     Boolean(agentExtraDataReads.error),
     roomsQuery.isError,
-    roomsQuery.error
+    roomsQuery.error,
   );
 
   return (

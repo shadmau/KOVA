@@ -18,7 +18,7 @@ const useMorphingText = (texts: string[]) => {
 
   const setStyles = useCallback(
     (fraction: number) => {
-      const [current1, current2]:any = [text1Ref.current, text2Ref.current];
+      const [current1, current2]: any = [text1Ref.current, text2Ref.current];
       if (!current1 || !current2) return;
 
       current2.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;

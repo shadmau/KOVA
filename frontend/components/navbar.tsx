@@ -31,8 +31,7 @@ const Navbar = () => {
 
           {/* Sign In Button */}
 
-            <ConnectButton chainStatus="name" />
-   
+          <ConnectButton chainStatus="name" />
 
           {/* Mobile menu button */}
           <div className="md:hidden">

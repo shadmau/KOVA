@@ -76,12 +76,12 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
   const handleStrategyChange = (
     id: number,
     field: keyof Strategy,
-    value: string
+    value: string,
   ) => {
     setStrategies((prevStrategies) =>
       prevStrategies.map((strategy) =>
-        strategy.id === id ? { ...strategy, [field]: value } : strategy
-      )
+        strategy.id === id ? { ...strategy, [field]: value } : strategy,
+      ),
     );
   };
 
@@ -105,7 +105,7 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
 
   const removeStrategy = (id: number) => {
     setStrategies((prevStrategies) =>
-      prevStrategies.filter((strategy) => strategy.id !== id)
+      prevStrategies.filter((strategy) => strategy.id !== id),
     );
   };
 

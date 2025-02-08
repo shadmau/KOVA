@@ -142,7 +142,6 @@ interface FormData {
   tradingGoals: string; // Add this field
 }
 
-
 const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [txStatus, setTxStatus] = useState<
@@ -326,7 +325,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
           log.topics[0] ===
             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && // Transfer event signature
           log.topics[1] ===
-            "0x0000000000000000000000000000000000000000000000000000000000000000" // from zero address
+            "0x0000000000000000000000000000000000000000000000000000000000000000", // from zero address
       );
 
       if (transferEvent) {
