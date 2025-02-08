@@ -24,6 +24,8 @@ function MyApp({ Component, pageProps }: AppProps) {
     transports: {
       [baseSepolia.id]: http(),
     },
+    syncConnectedChain: true, // This helps maintain connection state
+    // persister: null,
   });
 
   return (

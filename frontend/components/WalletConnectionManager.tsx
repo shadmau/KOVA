@@ -31,7 +31,7 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
   }, []);
 
   const handleConnectClick: any = async () => {
-    setIsOpen(false); // Close our custom dialog
+    setIsOpen(false);
     openConnectModal && (openConnectModal() as any);
   };
 

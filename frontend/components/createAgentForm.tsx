@@ -37,6 +37,7 @@ import { RainbowButton } from "./ui/rainbow-button";
 import TradingStrategyForm from "./TradingStrategyForm";
 import { PinataService } from "@/lib/pinata";
 import AgentAvailabilityDialog from "./AgentAvailabilityDialog";
+import { useRouter } from "next/navigation";
 
 const SUPPORTED_ASSETS = [
   "BTC",
@@ -147,7 +148,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [txStatus, setTxStatus] = useState<
     "loading" | "success" | "error" | null
   >(null);
-
+const router = useRouter();
   const [mintedTokenId, setMintedTokenId] = useState<bigint | null>(null);
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -219,7 +220,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         riskLevel: riskLevelValue.toString(),
         tokenId: mintedTokenId.toString(),
       });
-      window.location.href = `/agents?${queryParams.toString()}`;
+     router.push(`/agents?${queryParams.toString()}`);
     } else if (agentRole === "Trader" && mintedTokenId) {
       setShowAvailabilityDialog(true);
     }
