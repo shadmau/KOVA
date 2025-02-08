@@ -43,7 +43,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
 
   const menuItems: MenuItem[] = [
-    { icon: Home, label: "Home", href: "/home" },
+    { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
     { icon: BarChart2, label: "Dashboard", href: "/dashboard" },
     { icon: Shield, label: "Agents", href: "/agents" },

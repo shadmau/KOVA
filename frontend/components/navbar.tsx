@@ -8,7 +8,7 @@ const Navbar = ({ onClickHandler }: any) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navigation = [
-    { name: "Home", href: "/home" },
+    { name: "Home", href: "/" },
     { name: "My Agents", href: "/my-agents" },
     { name: "Create Agent", href: "/create-agent" },
     { name: "Profile", href: "/profile" },
