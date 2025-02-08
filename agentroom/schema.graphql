@@ -1,0 +1,26 @@
+type RoomCreated @entity(immutable: true) {
+  id: Bytes!
+  roomId: BigInt! # uint256
+  agentId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoomJoined @entity(immutable: true) {
+  id: Bytes!
+  roomId: BigInt! # uint256
+  agentId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoomLeft @entity(immutable: true) {
+  id: Bytes!
+  roomId: BigInt! # uint256
+  agentId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
