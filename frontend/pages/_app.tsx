@@ -1,14 +1,13 @@
 import "../styles/globals.css";
+import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import { PrivyProvider } from "@privy-io/react-auth";
-import { createConfig } from "@privy-io/wagmi";
-import { WagmiProvider } from "@privy-io/wagmi";
-// Replace this with any of the networks listed at https://github.com/wevm/viem/blob/main/src/chains/index.ts
 import { baseSepolia } from 'viem/chains';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "wagmi";
 import { Toaster } from "sonner";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider } from "wagmi";
 function MyApp({ Component, pageProps }: AppProps) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -18,12 +17,12 @@ function MyApp({ Component, pageProps }: AppProps) {
       },
     },
   });
-   const config = createConfig({
-     chains: [baseSepolia], // Pass your required chains as an array
-     transports: {
-       [baseSepolia.id]: http(),
-     },
-   });
+  const config = getDefaultConfig({
+    appName: "KOVA",
+    projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
+    chains: [baseSepolia],
+  });
+
   return (
     <>
       <Head>
@@ -60,23 +59,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         <title>KOVA</title>
         <meta name="description" content="KOVA" />
       </Head>
-      <PrivyProvider
-        appId={"cm6p9sea5014u11te91f104gi"}
-        config={{
-          embeddedWallets: {
-            createOnLogin: "all-users",
-          },
-          defaultChain: baseSepolia,
-          supportedChains: [baseSepolia],
-        }}
-      >
+      <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={config}>
+          <RainbowKitProvider>
             <Component {...pageProps} />
             <Toaster />
-          </WagmiProvider>
+          </RainbowKitProvider>
         </QueryClientProvider>
-      </PrivyProvider>
+      </WagmiProvider>
     </>
   );
 }

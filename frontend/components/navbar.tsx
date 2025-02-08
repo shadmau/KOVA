@@ -3,8 +3,9 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { RainbowButton } from "./ui/rainbow-button";
 import { NavbarDock } from "./ui/FloatingDock";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-const Navbar = ({ onClickHandler }: any) => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navigation = [
@@ -16,10 +17,10 @@ const Navbar = ({ onClickHandler }: any) => {
 
   return (
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/75 border-b border-gray-200/20 shadow-lg supports-[backdrop-filter]:bg-white/75">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="w-full mx-auto px-4 sm:px-6 py-4 lg:px-6">
+        <div className="w-full flex items-center justify-between h-10">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="pl-5">
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 KoVa
@@ -28,12 +29,12 @@ const Navbar = ({ onClickHandler }: any) => {
           </div>
 
           {/* Desktop Navigation - Centered */}
-          <NavbarDock />
+          {/* <NavbarDock /> */}
 
           {/* Sign In Button */}
-          <div className="hidden md:block">
-            <RainbowButton onClick={onClickHandler}>Sign in</RainbowButton>
-          </div>
+
+            <ConnectButton chainStatus="name" />
+   
 
           {/* Mobile menu button */}
           <div className="md:hidden">
@@ -66,7 +67,7 @@ const Navbar = ({ onClickHandler }: any) => {
             </Link>
           ))}
           <div className="w-[150px]">
-            <RainbowButton className="w-[150px]">Sign in</RainbowButton>
+            <ConnectButton chainStatus="name" />
           </div>
         </div>
       </div>
