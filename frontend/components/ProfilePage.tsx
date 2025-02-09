@@ -3,15 +3,7 @@ import { useAccount, useReadContracts } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ExternalLink } from "lucide-react";
+import { ArrowUpRight, Clock, ExternalLink, Tag, Wallet } from "lucide-react";
 import axios from "axios";
 
 import agentNftAbi from "@/lib/contractAbis/AgentNFT.json";
@@ -72,7 +64,6 @@ const fetchAllData = async (address: string) => {
       ),
     ];
 
-    // Use bulk endpoint for room actions
     if (roomIds.length === 0) {
       return {
         tokenIds: tokenIds.map((id: string) => BigInt(id)),
@@ -84,70 +75,25 @@ const fetchAllData = async (address: string) => {
       `https://schrank.xyz/api/secure-room/actions?roomIds=${roomIds.join(",")}`
     );
 
-    const transactions = roomActionsResponse.data?.transactions || [];
-    transactions.sort(
-      (a: any, b: any) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+  const transactions = Object.entries(roomActionsResponse.data)
+    .flatMap(([roomId, roomData]: [string, any]) =>
+      (roomData.transactions || []).map((tx:any) => ({
+        ...tx,
+        roomId,
+      }))
+    )
+    .filter((tx) => tx)
+    .sort((a: any, b: any) => b.timestamp - a.timestamp);
 
-    return {
-      tokenIds: tokenIds.map((id: string) => BigInt(id)),
-      transactions,
-    };
+   return {
+     tokenIds: tokenIds.map((id: string) => BigInt(id)),
+     transactions,
+   };
   } catch (error) {
     console.error("Error fetching data:", error);
     return { tokenIds: [], transactions: [] };
   }
 };
-
-const TransactionHistorySkeleton = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Transaction History</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        <div className="grid grid-cols-5 gap-4">
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
-        </div>
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="grid grid-cols-5 gap-4">
-            <div className="h-12 bg-gray-100 rounded animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded animate-pulse" />
-          </div>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const EmptyTransactionHistory = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Transaction History</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="rounded-full bg-gray-100 p-4 mb-4">
-          <ExternalLink className="h-8 w-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-1">
-          No Transactions Found
-        </h3>
-        <p className="text-sm text-gray-500">
-          There are no transactions to display at this time.
-        </p>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 const TransactionHistory = React.memo(
   ({
@@ -165,50 +111,137 @@ const TransactionHistory = React.memo(
       return <EmptyTransactionHistory />;
     }
 
+    const getTypeColor = (type: string) => {
+      const types = {
+        swap: "bg-green-100 text-green-800",
+        approve: "bg-blue-100 text-blue-800",
+        default: "bg-gray-100 text-gray-800",
+      };
+      return types[type as keyof typeof types] || types.default;
+    };
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-purple-600" />
+            Transaction History
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Transaction Hash</TableHead>
-                <TableHead>Room ID</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Volume (USD)</TableHead>
-                <TableHead>Timestamp</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <div className="min-w-full divide-y divide-gray-200">
               {transactions.map((tx: any, index: number) => (
-                <TableRow key={`${tx.roomId}-${index}`}>
-                  <TableCell>
-                    <a
-                      href={`https://sepolia.basescan.org/tx/${tx.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-500 hover:text-blue-600"
-                    >
-                      {tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)}
-                      <ExternalLink className="ml-1 h-4 w-4" />
-                    </a>
-                  </TableCell>
-                  <TableCell>{tx.roomId}</TableCell>
-                  <TableCell>{tx.type}</TableCell>
-                  <TableCell>${Number(tx.volumeUSD).toFixed(3)}</TableCell>
-                  <TableCell>
-                    {new Date(tx.timestamp).toLocaleString()}
-                  </TableCell>
-                </TableRow>
+                <div
+                  key={`${tx.roomId}-${index}`}
+                  className="group hover:bg-gray-50 transition-colors"
+                >
+                  <div className="p-4 sm:px-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                            <Tag className="h-5 w-5 text-purple-600" />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`https://sepolia.basescan.org/tx/${tx.txHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-gray-900 hover:text-purple-600 flex items-center gap-1 transition-colors"
+                            >
+                              {tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)}
+                              <ArrowUpRight className="h-4 w-4" />
+                            </a>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
+                                tx.type
+                              )}`}
+                            >
+                              {tx.type}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {new Date(tx.timestamp).toLocaleString()}
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="flex items-center gap-1">
+                              Room {tx.roomId}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Wallet className="h-4 w-4 text-gray-400" />
+                          <span className="font-medium text-gray-900">
+                            ${Number(tx.volumeUSD).toFixed(3)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
   }
+);
+
+const TransactionHistorySkeleton = () => (
+  <Card>
+    <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+      <CardTitle className="flex items-center gap-2">
+        <Clock className="h-5 w-5 text-purple-600" />
+        Transaction History
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="p-4">
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex items-center space-x-4">
+            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
+            </div>
+            <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const EmptyTransactionHistory = () => (
+  <Card>
+    <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+      <CardTitle className="flex items-center gap-2">
+        <Clock className="h-5 w-5 text-purple-600" />
+        Transaction History
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="rounded-full bg-purple-100 p-4 mb-4">
+          <ExternalLink className="h-8 w-8 text-purple-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          No Transactions Found
+        </h3>
+        <p className="text-sm text-gray-500">
+          There are no transactions to display at this time.
+        </p>
+      </div>
+    </CardContent>
+  </Card>
 );
 
 const ProfilePage = () => {
