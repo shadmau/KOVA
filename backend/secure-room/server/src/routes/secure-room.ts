@@ -1,9 +1,11 @@
 import { Router, Request, Response, NextFunction } from "express";
-// import { getNFTData } from "../plugins/collabland-plugin";
-
+import { AIAgentService } from "../services/agent.service.js";
+import { WalletService } from "../services/wallet.service.js";
+import { formatEther } from "viem";
+import { TransactionStatus } from "../types.js";
 const router = Router();
+const walletService = WalletService.getInstance();
 
-// Middleware to check that NODE_ENV is only local development
 const checkNodeEnv = (_req: Request, res: Response, next: NextFunction) => {
   if (process.env.NODE_ENV !== "development") {
     res.status(403).json({ error: "Forbidden" });
@@ -11,52 +13,173 @@ const checkNodeEnv = (_req: Request, res: Response, next: NextFunction) => {
   }
   next();
 };
-/*
+
+const aiService = AIAgentService.getInstance();
+aiService.start();
 
 
-You are a Secure Room manager. Your task is to manage interactions between the Trader and Investor Agents. Available tools: - <tool>getParticipants</tool>: Retrieve the list of participants in the room. - <tool>getNFTData</tool>: Retrieve NFT data for the Trader and Investor Agents. Use these tools to gather the necessary information and proceed with the simulation.
-
-curl -X POST http://127.0.0.1:8080/v1/chat/completions \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '{"messages":[{"role":"system", "content": "You are a Secure Room manager. Your task is to manage interactions between the Trader and Investor Agents. Available tools: - <tool>getParticipants</tool>: Retrieve the list of participants in the room. - <tool>getNFTData</tool>: Retrieve NFT data for the Trader and Investor Agents. Use these tools to gather the necessary information and proceed with the simulation.
-"}]}'
-
-
-
-        */
+// !remove 
+let counter = 0
 // Handler for opening secure room
-const handleOpenSecureRoom = async (req: Request, res: Response) => {
+const handleTest = async (req: Request, res: Response) => {
   try {
-    // Step 1: Retrieve NFT Data
-    // const traderNFT = await getNFTData({
-    //   contractAddress: "0xTraderContractAddress", // Replace with actual address
-    //   tokenId: roomId,
-    // });
+    counter++
+    const roomId = counter.toString()
+    // const aiService = AIAgentService.getInstance();
+    const { initialMessages } = req.body;
+    if (!initialMessages || !Array.isArray(initialMessages)) {
+      res.status(400).json({
+        success: false,
+        error: "Initial messages are required and must be an array"
+      });
+      return
+    }
+    let result;
 
-    // const investorNFT = await getNFTData({
-    //   contractAddress: "0xInvestorContractAddress", // Replace with actual address
-    //   tokenId: roomId,
-    // });
+    for (let i = 0; i < 5; i++) {
 
-    // Step 2: Decrypt NFT Data (Mock decryption for now)
-    // const decryptedTraderData = JSON.parse(traderNFT.encryptedPayload);
-    // const decryptedInvestorData = JSON.parse(investorNFT.encryptedPayload);
+      result = await aiService.processMessageWithHistory(
+        roomId,
+        initialMessages,
+      );
+      if (!result.toolResults || result.toolResults.length === 0) {
+        break;
+      }
+      // console.log(result);
+      const waitTool = result.toolResults?.find(tr => tr.tool.startsWith('waitFor'));
+      if (waitTool && waitTool.params) {
+        const seconds = parseInt(waitTool.params);
+        console.log(`Waiting for ${seconds} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+      }
+      await new Promise(resolve => setTimeout(resolve, 250));
 
-    // Step 3: Return Decrypted Data
+    }
+    aiService.clearMessageHistory(roomId);
     res.status(200).json({
-      success: true,
-      message: "Secure Room Template",
-      timestamp: new Date().toISOString(),
+      message: result,
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: "Internal Server Error" 
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
     });
   }
 };
 
-router.get("/open", checkNodeEnv, handleOpenSecureRoom);
+
+const handleGetRoomWallet = async (req: Request, res: Response) => {
+  try {
+    // Step 1: Check if the room id is provided
+    const roomId = parseInt(req.params.roomId);
+    if (!roomId) {
+      res.status(400).json({
+        success: false,
+        error: "Room ID is required"
+      });
+      return;
+    }
+
+    // Step 2: Check if wallet for room exists
+    const walletAddress: string | null = await walletService.getWalletAddress(parseInt(roomId.toString()));
+    if (!walletAddress) {
+      res.status(404).json({
+        success: false,
+        error: "Wallet not found"
+      });
+      return;
+    }
+
+    // Step 3: Return wallet address
+    res.status(200).json({
+      success: true,
+      walletAddress,
+      roomId
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
+  }
+};
+
+const handleFaucetToken = async (req: Request, res: Response) => {
+  try {
+    const walletAddress = req.params.address;
+    if (!walletAddress) {
+      res.status(400).json({
+        success: false,
+        error: "Wallet address is required"
+      });
+      return;
+    }
+
+    const result = await walletService.faucetToken(walletAddress);
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        tx: result.tx
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    console.error("Faucet error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
+  }
+};
+
+const handleGetRoomActions = async (req: Request, res: Response) => {
+  try {
+    const { roomId } = req.params;
+    const roomData = AIAgentService.getInstance().getRoomActionData(roomId);
+    if (!roomData) {
+      res.status(400).json({
+        success: false,
+        error: "Room actions not found"
+      });
+      return
+    }
+
+    const totalVolume = roomData.transactions
+      .filter(tx => tx.status === TransactionStatus.CONFIRMED)
+      .reduce((sum, tx) => sum + BigInt(tx.volumeUSD), BigInt(0));
+    const formattedTotalVolume = formatEther(totalVolume);
+
+    const formattedTransactions = roomData.transactions.map(tx => ({
+      ...tx,
+      volumeUSD: tx.volumeUSD.toString()
+    }));
+
+    res.status(200).json({
+      totalVolumeUSD: formattedTotalVolume,
+      computationCount: roomData.computationCount,
+      isStopped: roomData.isStopped,
+      transactions: formattedTransactions
+    });
+  } catch (error) {
+    console.error("Error retrieving room actions:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
+  }
+};
+
+
+router.get("/wallet/:roomId", checkNodeEnv, handleGetRoomWallet);
+router.get("/faucet/:address", handleFaucetToken);
+router.get("/actions/:roomId", handleGetRoomActions);
+router.post("/test", handleTest);
+
 
 export default router;
