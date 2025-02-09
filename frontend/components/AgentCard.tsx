@@ -48,14 +48,53 @@ const fetchRoomCreated = async (agentId: string) => {
     return null;
   }
 };
-
 const fetchTradingStrategy = async (
-  uri: string,
+  uri: string
 ): Promise<TradingStrategy | null> => {
   try {
+    // First attempt: Try Nillion decryption
+    try {
+      const nillionResponse = await axios.get(
+        `https://schrank.xyz/api/nillion/decrypt`,
+        {
+          params: {
+            nillionUri: uri,
+          },
+        }
+      );
+
+      if (nillionResponse.data.data?.[0]) {
+        const decryptedData = nillionResponse.data.data[0];
+
+        // Remove $allot wrapper if present
+        const tradingStrategy =
+          decryptedData.tradingStrategy?.$allot ||
+          decryptedData.tradingStrategy;
+        const constraints =
+          decryptedData.constraints?.$allot || decryptedData.constraints;
+
+        return {
+          tradingStrategy: tradingStrategy || constraints,
+          assets: decryptedData.assets || [],
+          tradingGoals: decryptedData.tradingGoals,
+          riskLevel: decryptedData.riskLevel,
+        };
+      }
+    } catch (nillionError) {
+      console.log("Nillion fetch failed, trying IPFS...");
+    }
+
+    // Second attempt: Try IPFS/Pinata
     const cid = uri.replace("ipfs://", "");
-    const response = await axios.get(`${PINATA_GATEWAY}${cid}`);
-    return response.data;
+    const pinataResponse = await axios.get(`${PINATA_GATEWAY}${cid}`);
+
+    return {
+      tradingStrategy:
+        pinataResponse.data.tradingStrategy || pinataResponse.data.constraints,
+      assets: pinataResponse.data.assets || [],
+      tradingGoals: pinataResponse.data.tradingGoals,
+      riskLevel: pinataResponse.data.riskLevel,
+    };
   } catch (error) {
     console.error("Error fetching trading strategy:", error);
     return null;
@@ -79,13 +118,14 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
 
   // Fetch trading strategy if agent is a trader
   const { data: tradingStrategy } = useQuery({
-    queryKey: ["tradingStrategy", agent.userPromptURI],
-    queryFn: () => fetchTradingStrategy(agent.userPromptURI || ""),
-    staleTime: 30 * 1000, // 30 seconds
+    queryKey: ["tradingStrategy", agent.userPromptURI, agent.promptsEncrypted],
+    queryFn: () =>
+      fetchTradingStrategy(agent.userPromptURI || ""),
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
     retry: 2,
-    refetchInterval: 60 * 1000, // Refetch every minute
-    enabled: agent.agentType === 0 && !!agent.userPromptURI,
+    refetchInterval: 60 * 1000,
+    enabled: !!agent.userPromptURI,
   });
   console.log("Trading strategies ", tradingStrategy);
   // If rooms exist, check their status
@@ -158,22 +198,24 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm text-gray-500 flex items-center">
-                <Activity className="w-4 h-4 mr-2" />
-                Status
+            {agent.agentType === 0 && (
+              <div className="space-y-2">
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Status
+                </div>
+                <div className="flex items-center">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      isAvailable ? "bg-green-500" : "bg-yellow-500"
+                    } mr-2`}
+                  />
+                  <span className="text-sm">
+                    {isAvailable ? "Available" : "Not Available"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    isAvailable ? "bg-green-500" : "bg-yellow-500"
-                  } mr-2`}
-                />
-                <span className="text-sm">
-                  {isAvailable ? "Available" : "Not Available"}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
 
           {agent.agentType === 0 && tradingStrategy && (
@@ -204,15 +246,15 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
                       agent.riskLevel === 2
                         ? "text-red-500"
                         : agent.riskLevel === 1
-                          ? "text-yellow-500"
-                          : "text-green-500"
+                        ? "text-yellow-500"
+                        : "text-green-500"
                     }
                   >
                     {agent.riskLevel === 2
                       ? "High"
                       : agent.riskLevel === "1"
-                        ? "Medium"
-                        : "Low"}{" "}
+                      ? "Medium"
+                      : "Low"}{" "}
                     Risk
                   </Badge>
                 </div>

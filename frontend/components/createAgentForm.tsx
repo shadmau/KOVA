@@ -45,6 +45,10 @@ import InvestmentConstraint from "./InvestmentConstraint";
 const SUPPORTED_ASSETS = ["USDT"] as const;
 const MIN_INVESTMENT = 1;
 const MAX_INVESTMENT = 100;
+interface EncryptResponse {
+  success: boolean;
+  nillionUri: string;
+}
 
 type SupportedAsset = (typeof SUPPORTED_ASSETS)[number];
 const RISK_LEVEL_MAPPING = {
@@ -311,84 +315,146 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     setTxHash(null);
   };
 
-  const generateUserPromptURI = async (formData: FormData) => {
-    const basePromptData = {
-      agentRole: formData.agentRole,
-      tradingGoals: formData.tradingGoals,
-      timestamp: Date.now(),
+const formatDataForNillion = (formData: FormData) => {
+  const basePromptData = {
+    agentRole: formData.agentRole,
+    tradingGoals: formData.tradingGoals,
+    timestamp: Date.now(),
+  };
+
+  if (formData.agentRole === "Investor") {
+    return {
+      ...basePromptData,
+      maxLossTolerance: formData.maxLossTolerance,
+      expectedReturn: formData.expectedReturn,
+      constraints: { $allot: formData.constraints },
     };
+  } else {
+    return {
+      ...basePromptData,
+      tradingStrategy: { $allot: formData.tradingStrategy },
+    };
+  }
+};
 
-    let promptData: any = { ...basePromptData };
+const formatDataForIPFS = (formData: FormData) => {
+  const basePromptData = {
+    agentRole: formData.agentRole,
+    tradingGoals: formData.tradingGoals,
+    timestamp: Date.now(),
+  };
 
-    if (formData.agentRole === "Investor") {
-      promptData = {
-        ...promptData,
-        maxLossTolerance: formData.maxLossTolerance,
-        expectedReturn: formData.expectedReturn,
-        constraints: formData.constraints,
-        // constraints: `maximum investment per trade: ${formData.maxInvestment} USDT`,
-      };
+  if (formData.agentRole === "Investor") {
+    return {
+      ...basePromptData,
+      maxLossTolerance: formData.maxLossTolerance,
+      expectedReturn: formData.expectedReturn,
+      constraints: formData.constraints,
+    };
+  } else {
+    return {
+      ...basePromptData,
+      tradingStrategy: formData.tradingStrategy,
+    };
+  }
+};
+
+const encryptWithNillion = async (data: any) => {
+  try {
+    const response = await fetch("https://schrank.xyz/api/nillion/encrypt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: data.agentRole.toLowerCase(),
+        data: [data],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to encrypt data with Nillion");
     }
 
-    if (formData.agentRole === "Trader") {
-      promptData = {
-        ...promptData,
-        tradingStrategy: formData.tradingStrategy,
-      };
-    }
+    const result: EncryptResponse = await response.json();
+    return result.nillionUri;
+  } catch (error) {
+    console.error("Nillion encryption error:", error);
+    throw error;
+  }
+};
 
+const generateUserPromptURI = async (formData: FormData) => {
+  // Format data based on privacy selection
+  const promptData =
+    privacy === "private"
+      ? formatDataForNillion(formData)
+      : formatDataForIPFS(formData);
+
+  // Use Nillion or IPFS based on privacy selection
+  if (privacy === "private") {
+    return await encryptWithNillion(promptData);
+  } else {
     return await PinataService.uploadJSON(promptData);
-  };
+  }
+};
 
-  const onSubmit = async (data: FormData) => {
+
+const onSubmit = async (data: FormData) => {
+  try {
+    setTxStatus("loading");
+    let userPromptURI;
+
     try {
-      setTxStatus("loading");
-      let userPromptURI;
-      try {
-        userPromptURI = await generateUserPromptURI(data);
-      } catch (error) {
-        console.error("Failed to upload to IPFS:", error);
-        setTxStatus("error");
-        return;
-      }
-
-      if (!writeContractAsync) {
-        throw new Error("Write contract not initialized");
-      }
-
-      const tx = await writeContractAsync({
-        address: contractAddress as `0x${string}`,
-        abi: contractAbi,
-        functionName: "mint",
-        args: [
-          {
-            name: data.agentName,
-            description: data.additionalNotes,
-            model: "Llama 3.3 70B",
-            userPromptURI: `ipfs://${userPromptURI}`,
-            systemPromptURI: "",
-            promptsEncrypted: false,
-            riskLevel: RISK_LEVEL_MAPPING[data.riskLevel],
-            agentType: data.agentRole === "Investor" ? 1 : 0,
-            investmentAmount:
-              agentRole === "Investor"
-                ? data.maxInvestment
-                : data.minInvestment,
-            preferredAssets: ["0xd1d6A8E7a1593e005FDBC08e978a389127277749"],
-          },
-        ],
-      });
-
-      if (tx) {
-        setTxHash(tx);
-      } else {
-        throw new Error("Transaction failed");
-      }
+      const uri = await generateUserPromptURI(data);
+      // For IPFS, prepend ipfs://, for Nillion use the URI as is
+      userPromptURI = privacy === "private" ? uri : `ipfs://${uri}`;
     } catch (error) {
-      console.error("Error minting agent:", error);
+      console.error(
+        privacy === "private"
+          ? "Failed to encrypt with Nillion:"
+          : "Failed to upload to IPFS:",
+        error
+      );
       setTxStatus("error");
+      return;
     }
-  };
+
+    if (!writeContractAsync) {
+      throw new Error("Write contract not initialized");
+    }
+
+    const tx = await writeContractAsync({
+      address: contractAddress as `0x${string}`,
+      abi: contractAbi,
+      functionName: "mint",
+      args: [
+        {
+          name: data.agentName,
+          description: data.additionalNotes,
+          model: "Llama 3.3 70B",
+          userPromptURI: userPromptURI,
+          systemPromptURI: "",
+          promptsEncrypted: privacy === "private",
+          riskLevel: RISK_LEVEL_MAPPING[data.riskLevel],
+          agentType: data.agentRole === "Investor" ? 1 : 0,
+          investmentAmount:
+            agentRole === "Investor" ? data.maxInvestment : data.minInvestment,
+          preferredAssets: ["0xd1d6A8E7a1593e005FDBC08e978a389127277749"],
+        },
+      ],
+    });
+
+    if (tx) {
+      setTxHash(tx);
+    } else {
+      throw new Error("Transaction failed");
+    }
+  } catch (error) {
+    console.error("Error minting agent:", error);
+    setTxStatus("error");
+  }
+};
   // Update useEffect watching for transaction confirmation:
   useEffect(() => {
     const getTokenId = async () => {
