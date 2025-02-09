@@ -20,18 +20,24 @@ const WalletConnectionManager = ({
   const [hasAttemptedConnection, setHasAttemptedConnection] =
     React.useState(false);
   const { openConnectModal } = useConnectModal();
-  const { isConnected } = useAccount();
+
+  const { isConnected, status } = useAccount();
+
   const [isMobile, setIsMobile] = React.useState(false);
 
   // Handle mobile detection
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+ React.useEffect(() => {
+   if (status === "connected") {
+     setIsOpen(false);
+     setHasAttemptedConnection(true);
+   } else if (
+     shouldShowConnectDialog &&
+     !hasAttemptedConnection &&
+     status !== "connecting"
+   ) {
+     setIsOpen(true);
+   }
+ }, [shouldShowConnectDialog, status, hasAttemptedConnection]);
 
   // Handle connection persistence
   React.useEffect(() => {

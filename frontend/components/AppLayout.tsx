@@ -47,17 +47,20 @@ interface Breadcrumb {
   label: string;
 }
 const WalletStatus = () => {
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { data: ensName } = useEnsName({ address });
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = React.useState(false);
 
-  const shortenAddress = (addr: any) => {
+  // Don't render if not connected
+  if (!isConnected || !address) return null;
+
+  const shortenAddress = (addr: string) => {
     return `${addr?.slice(0, 6)}...${addr?.slice(-4)}`;
   };
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(address as any);
+    navigator.clipboard.writeText(address as string);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -66,18 +69,13 @@ const WalletStatus = () => {
     <TooltipProvider>
       <div className="flex items-center gap-2">
         <div className="relative flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 px-4 py-1 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-purple-900/30 dark:via-purple-800/30 dark:to-purple-900/30 border border-purple-200/50 dark:border-purple-700/30 backdrop-blur-sm">
-          {/* Glowing dot */}
           <div className="relative">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             <div className="absolute inset-0 h-2 w-2 rounded-full bg-green-400 animate-ping opacity-75" />
           </div>
-
-          {/* Address display */}
           <span className="text-sm font-medium bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent dark:from-purple-300 dark:to-purple-400">
             {ensName || shortenAddress(address)}
           </span>
-
-          {/* Action buttons */}
           <div className="flex gap-1 ml-2">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -141,7 +139,8 @@ const WalletStatus = () => {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobileOpen, setIsMobileOpen] = React.useState<boolean>(false);
   const pathname = usePathname();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
+  const [isReady, setIsReady] = React.useState(false);
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
@@ -149,6 +148,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { icon: Shield, label: "Agents", href: "/agents" },
   ];
 
+   React.useEffect(() => {
+     if (status !== "connecting") {
+       setIsReady(true);
+     }
+   }, [status]);
   const getBreadcrumbs = (): Breadcrumb[] => {
     const paths = pathname.split("/").filter((p) => p);
     return paths.map((path, index) => {
@@ -242,7 +246,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <RoomProvider>
       <div className="flex min-h-screen">
         <WalletConnectionManager
-          shouldShowConnectDialog={!isConnected && !address}
+          shouldShowConnectDialog={!isConnected && !address && isReady}
         />
         {/* Sidebar - Desktop */}
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
@@ -300,7 +304,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <div className="flex flex-1 items-center gap-4">
               <Breadcrumbs />
             </div>
-            {isConnected && <WalletStatus />}
+            {isReady && <WalletStatus />}
           </header>
           <main className="flex-1">{children}</main>
         </div>
