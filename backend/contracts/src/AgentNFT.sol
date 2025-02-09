@@ -13,11 +13,7 @@ contract AgentNFT is ERC721, ERC721Enumerable, ERC721URIStorage, IExtendedERC766
 
     constructor() ERC721("AgentNFT", "KOVA") {}
 
-    function mint(AgentData memory _agentData, string memory _imageURI) external {
-        uint256 currentTokenId = totalSupply() + 1;
-        _mint(msg.sender, currentTokenId);
-        agentData[currentTokenId] = _agentData;
-        _setTokenURI(currentTokenId, _imageURI);
+    function mint(AgentData memory _agentData) external {
     }
 
     function _update(address to, uint256 tokenId, address auth)
@@ -47,6 +43,20 @@ contract AgentNFT is ERC721, ERC721Enumerable, ERC721URIStorage, IExtendedERC766
     }
 
     function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {}
+
+
+function getAgentExtraData(uint256 agentId)
+        external
+        view
+        returns (AgentType agentType, RiskLevel riskLevel, uint256 investmentAmount, address[] memory preferredAssets)
+    {
+        agentType = agentData[agentId].agentType;
+        riskLevel = agentData[agentId].riskLevel;
+        investmentAmount = agentData[agentId].investmentAmount;
+        preferredAssets = agentData[agentId].preferredAssets;
+    }
+
+
 
     function getAgentData(uint256 tokenId)
         external
