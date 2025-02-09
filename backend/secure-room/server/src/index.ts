@@ -14,7 +14,8 @@ import { AIAgentService } from "./services/agent.service.js";
 import { ContractListenerService } from "./services/room-listener.service.js";
 import { WalletService } from "./services/wallet.service.js";
 import { SwapService } from "./services/swap.service.js";
-
+import { NilionService } from "./services/nilion.service.js";
+import nilionRoute from "./routes/nilion.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -23,6 +24,7 @@ const services: IService[] = [
   SwapService.getInstance(),
   AIAgentService.getInstance(),
   ContractListenerService.getInstance(),
+  NilionService.getInstance(),
 ];
 
 dotenv.config({
@@ -39,6 +41,7 @@ app.use(cookieParser());
 
 app.use("/api/secure-room", secureRoomRoute);
 app.use("/api/test", testRouter);
+app.use("/api/nillion", nilionRoute);
 
 app.use((_req: Request, _res: Response, _next: NextFunction) => {
   _res.status(404).json({
