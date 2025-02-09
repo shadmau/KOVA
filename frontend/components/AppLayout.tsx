@@ -47,13 +47,24 @@ interface Breadcrumb {
   label: string;
 }
 const WalletStatus = () => {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const { data: ensName } = useEnsName({ address });
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = React.useState(false);
+  
+  const [mounted, setMounted] = React.useState(false);
+
+  // Handle mounting state
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until component is mounted
+  if (!mounted) return null;
 
   // Don't render if not connected
-  if (!isConnected || !address) return null;
+  if (!isConnected || !address || status === "reconnecting") return null;
+
 
   const shortenAddress = (addr: string) => {
     return `${addr?.slice(0, 6)}...${addr?.slice(-4)}`;
@@ -149,7 +160,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
 
    React.useEffect(() => {
-     if (status !== "connecting") {
+     if (status !== "reconnecting") {
        setIsReady(true);
      }
    }, [status]);

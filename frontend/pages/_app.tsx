@@ -11,29 +11,30 @@ import { WagmiProvider } from "wagmi";
 import AppLayout from "@/components/AppLayout";
 import { useRouter } from "next/router";
 import Navbar from "@/components/navbar";
+const wagmiConfig = getDefaultConfig({
+  appName: "KOVA",
+  projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
+  chains: [baseSepolia],
+  transports: {
+    [baseSepolia.id]: http(),
+  },
+  syncConnectedChain: true,
+  ssr: true,
+});
 
+// Create QueryClient outside component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+  },
+});
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isHomePage = router.pathname === "/";
-
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000, // 1 minute
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
-
-  const config = getDefaultConfig({
-    appName: "KOVA",
-    projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
-    chains: [baseSepolia],
-    transports: {
-      [baseSepolia.id]: http(),
-    },
-    syncConnectedChain: true,
-  });
 
   const Layout = isHomePage
     ? ({ children }: { children: React.ReactNode }) => (
@@ -75,7 +76,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             <title>KOVA</title>
             <meta name="description" content="KOVA" />
           </Head>
-          <WagmiProvider config={config}>
+          <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
               <RainbowKitProvider>
                 <Navbar />
@@ -123,7 +124,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <title>KOVA</title>
         <meta name="description" content="KOVA" />
       </Head>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider>
             <Layout>

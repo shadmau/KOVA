@@ -32,7 +32,7 @@ const WalletConnectionManager = ({
    } else if (
      shouldShowConnectDialog &&
      !hasAttemptedConnection &&
-     status !== "connecting"
+     status !== "reconnecting"
    ) {
      setIsOpen(true);
    }
@@ -52,6 +52,8 @@ const WalletConnectionManager = ({
    setHasAttemptedConnection(true);
    openConnectModal?.();
  };
+  
+  
   // Mobile warning component
   const MobileWarning = () => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
@@ -81,6 +83,8 @@ const WalletConnectionManager = ({
       </div>
     </div>
   );
+
+  if (isConnected) return null;
 
   return (
     <>
