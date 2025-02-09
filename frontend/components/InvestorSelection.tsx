@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import request from "graphql-request";
-import { useReadContracts } from "wagmi";
+import { useAccount, useReadContracts } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Activity, Loader2 } from "lucide-react";
@@ -19,11 +19,14 @@ const SUBGRAPH_URL_FOR_ROOMS =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL_FOR_ROOMS || "YOUR_SUBGRAPH_URL";
 
 const FETCH_MINTS = `
-  query FetchMints($first: Int, $skip: Int) {
+  query FetchMints($first: Int, $skip: Int, $owner: String!) {
     transfers(
       first: $first
       skip: $skip
-      where: { from: "0x0000000000000000000000000000000000000000" }
+      where: { 
+        from: "0x0000000000000000000000000000000000000000",
+        to: $owner
+      }
       orderDirection: desc
     ) {
       id
@@ -56,27 +59,33 @@ interface Agent {
 const InvestorSelection = () => {
   const router = useRouter();
   const [tokenIds, setTokenIds] = useState<bigint[]>([]);
+const { address } = useAccount(); // Get the connected wallet address
 
-  // Fetch mints
-  const mintsQuery: any = useQuery({
-    queryKey: ["mints"],
-    queryFn: async () => {
-      const response = await request<{
-        transfers: { id: string; tokenId: string; to: string }[];
-      }>(SUBGRAPH_URL, FETCH_MINTS, {
-        first: 100,
-        skip: 0,
-      });
+// Fetch mints
+const mintsQuery: any = useQuery({
+  queryKey: ["mints", address],
+  queryFn: async () => {
+    if (!address) return { transfers: [] };
 
-      const ids = response.transfers.map((t) => BigInt(t.tokenId));
-      setTokenIds(ids);
-      return response.transfers;
-    },
-    staleTime: 30 * 1000, // 30 seconds
-    refetchOnWindowFocus: true,
-    retry: 2,
-    refetchInterval: 60 * 1000, // Refetch every minute
-  });
+    const response = await request<{
+      transfers: { id: string; tokenId: string; to: string }[];
+    }>(SUBGRAPH_URL, FETCH_MINTS, {
+      first: 100,
+      skip: 0,
+      owner: address.toLowerCase(), // GraphQL queries typically expect lowercase addresses
+    });
+
+    const ids = response.transfers.map((t) => BigInt(t.tokenId));
+    setTokenIds(ids);
+    return response.transfers;
+  },
+  staleTime: 30 * 1000,
+  refetchOnWindowFocus: true,
+  retry: 2,
+  refetchInterval: 60 * 1000,
+  enabled: !!address, // Only run the query when we have an address
+});
+
 
   // Convert BigInt array to string array for query key
   const tokenIdsForKey = tokenIds.map((id) => id.toString());
