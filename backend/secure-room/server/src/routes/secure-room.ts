@@ -140,31 +140,71 @@ const handleFaucetToken = async (req: Request, res: Response) => {
 
 const handleGetRoomActions = async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
-    const roomData = AIAgentService.getInstance().getRoomActionData(roomId);
-    if (!roomData) {
-      res.status(400).json({
-        success: false,
-        error: "Room actions not found"
+    const singleRoomId = req.params.roomId;
+    const queryRoomIds = req.query.roomIds as string;
+
+    if (singleRoomId) {
+      const roomData = AIAgentService.getInstance().getRoomActionData(singleRoomId);
+      if (!roomData) {
+        res.status(400).json({
+          success: false,
+          error: "Room actions not found"
+        });
+        return;
+      }
+
+      const totalVolume = roomData.transactions
+        .filter(tx => tx.status === TransactionStatus.CONFIRMED)
+        .reduce((sum, tx) => sum + BigInt(tx.volumeUSD), BigInt(0));
+      const formattedTotalVolume = formatEther(totalVolume);
+
+      const formattedTransactions = roomData.transactions.map(tx => ({
+        ...tx,
+        volumeUSD: formatEther(tx.volumeUSD)
+      }));
+
+      res.status(200).json({
+        totalVolumeUSD: formattedTotalVolume,
+        computationCount: roomData.computationCount,
+        isStopped: roomData.isStopped,
+        transactions: formattedTransactions
       });
-      return
+      return;
     }
 
-    const totalVolume = roomData.transactions
-      .filter(tx => tx.status === TransactionStatus.CONFIRMED)
-      .reduce((sum, tx) => sum + BigInt(tx.volumeUSD), BigInt(0));
-    const formattedTotalVolume = formatEther(totalVolume);
+    if (queryRoomIds) {
+      const roomIdArray = queryRoomIds.split(',').map(id => id.trim());
+      const results: Record<string, any> = {};
 
-    const formattedTransactions = roomData.transactions.map(tx => ({
-      ...tx,
-      volumeUSD: tx.volumeUSD.toString()
-    }));
+      for (const roomId of roomIdArray) {
+        const roomData = AIAgentService.getInstance().getRoomActionData(roomId);
+        if (roomData) {
+          const totalVolume = roomData.transactions
+            .filter(tx => tx.status === TransactionStatus.CONFIRMED)
+            .reduce((sum, tx) => sum + BigInt(tx.volumeUSD), BigInt(0));
+          const formattedTotalVolume = formatEther(totalVolume);
 
-    res.status(200).json({
-      totalVolumeUSD: formattedTotalVolume,
-      computationCount: roomData.computationCount,
-      isStopped: roomData.isStopped,
-      transactions: formattedTransactions
+          const formattedTransactions = roomData.transactions.map(tx => ({
+            ...tx,
+            volumeUSD: formatEther(tx.volumeUSD)
+          }));
+
+          results[roomId] = {
+            totalVolumeUSD: formattedTotalVolume,
+            computationCount: roomData.computationCount,
+            isStopped: roomData.isStopped,
+            transactions: formattedTransactions
+          };
+        }
+      }
+
+      res.status(200).json(results);
+      return;
+    }
+
+    res.status(400).json({
+      success: false,
+      error: "Room ID(s) required"
     });
   } catch (error) {
     console.error("Error retrieving room actions:", error);
@@ -179,7 +219,8 @@ const handleGetRoomActions = async (req: Request, res: Response) => {
 router.get("/wallet/:roomId", checkNodeEnv, handleGetRoomWallet);
 router.get("/faucet/:address", handleFaucetToken);
 router.get("/actions/:roomId", handleGetRoomActions);
-router.post("/test", handleTest);
+router.get("/actions", handleGetRoomActions);
+// router.post("/test", handleTest);
 
 
 export default router;
