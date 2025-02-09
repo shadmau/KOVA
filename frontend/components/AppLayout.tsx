@@ -4,8 +4,6 @@ import {
   User,
   BarChart2,
   Shield,
-  CreditCard,
-  Settings,
   Menu,
   Copy,
   ExternalLink,
@@ -13,7 +11,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -143,29 +141,18 @@ const WalletStatus = () => {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobileOpen, setIsMobileOpen] = React.useState<boolean>(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
-  const basePath: any = pathname.split("?")[0];
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
     { icon: BarChart2, label: "Profile", href: "/profile" },
     { icon: Shield, label: "Agents", href: "/agents" },
-    { icon: CreditCard, label: "Payment", href: "/payment" },
-    { icon: Settings, label: "Team Settings", href: "/settings" },
   ];
 
   const getBreadcrumbs = (): Breadcrumb[] => {
-    const paths = basePath.split("/").filter((p: any) => p);
-    return paths.map((path: any, index: any) => {
-      const href =
-        "/" +
-        paths.slice(0, index + 1).join("/") +
-        (index === paths.length - 1
-          ? searchParams.toString()
-            ? `?${searchParams.toString()}`
-            : ""
-          : "");
+    const paths = pathname.split("/").filter((p) => p);
+    return paths.map((path, index) => {
+      const href = "/" + paths.slice(0, index + 1).join("/");
       const label = path.charAt(0).toUpperCase() + path.slice(1);
       return { href, label };
     });

@@ -20,6 +20,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { parseEther } from "viem";
 import { useRoom } from "@/context/room";
+import SecureRoomTransactions from "./SecureRoomTransactions";
 
 const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
@@ -263,20 +264,14 @@ const InvestorFlowDialog = ({
   const renderContent = () => {
     if (showProgressBar) {
       return (
-        <div className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Secure Room</h2>
-          <p className="text-gray-600">Status: IN_PROGRESS</p>
-          <p className="text-center">Discussion is ongoing.</p>
-          <p className="text-center text-gray-500">
-            Estimated time remaining: {Math.floor(timeRemaining / 60)}:
-            {(timeRemaining % 60).toString().padStart(2, "0")}
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${(timeRemaining / 120) * 100}%` }}
-            ></div>
-          </div>
+        <div className="p-6">
+          <SecureRoomTransactions
+            timeRemaining={timeRemaining}
+            onComplete={() => {
+              setShowProgressBar(false);
+              window.location.reload();
+            }}
+          />
           <Button
             variant="destructive"
             className="w-full mt-4"

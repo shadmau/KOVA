@@ -70,6 +70,7 @@ module.exports = {
       animation: {
         rainbow: "rainbow var(--speed, 2s) infinite linear",
         gradient: "gradient 8s linear infinite",
+        "gradient-slow": "gradient 15s ease infinite",
       },
       keyframes: {
         rainbow: {
@@ -81,9 +82,9 @@ module.exports = {
           },
         },
         gradient: {
-          to: {
-            backgroundPosition: "var(--bg-size) 0",
-          },
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
         },
         "aurora-border": {
           "0%, 100%": {

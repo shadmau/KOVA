@@ -15,10 +15,12 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const { openConnectModal } = useConnectModal();
-  const { isConnected } = useAccount();
+    const { isConnected } = useAccount();
+
 
   // Check if screen is mobile
-  const [isMobile, setIsMobile] = React.useState(false);
+    const [isMobile, setIsMobile] = React.useState(false);
+
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -30,10 +32,7 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const handleConnectClick: any = async () => {
-    setIsOpen(false);
-    openConnectModal && (openConnectModal() as any);
-  };
+
 
   // Mobile warning component
   const MobileWarning = () => (
@@ -70,7 +69,7 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
       {isMobile && <MobileWarning />}
 
       <Dialog
-        open={isOpen && shouldShowConnectDialog}
+        open={shouldShowConnectDialog||isOpen}
         onOpenChange={(open) => {
           if (!isConnected) {
             setIsOpen(open);
@@ -93,7 +92,7 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
                   Connect your wallet to access all features
                 </p>
               </div>
-              <Button className="w-full" onClick={handleConnectClick}>
+              <Button className="w-full" onClick={openConnectModal}>
                 Connect Wallet
               </Button>
             </div>

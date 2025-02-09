@@ -5,7 +5,7 @@ import request from "graphql-request";
 import { useReadContracts } from "wagmi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Activity } from "lucide-react";
+import { Users, Activity, Loader2 } from "lucide-react";
 
 import type { Abi } from "viem";
 import agentNftAbi from "../lib/contractAbis/AgentNFT.json";
@@ -15,6 +15,8 @@ const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 const SUBGRAPH_URL =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL || "YOUR_SUBGRAPH_URL";
+const SUBGRAPH_URL_FOR_ROOMS =
+  process.env.NEXT_PUBLIC_SUBGRAPH_URL_FOR_ROOMS || "YOUR_SUBGRAPH_URL";
 
 const FETCH_MINTS = `
   query FetchMints($first: Int, $skip: Int) {
@@ -27,6 +29,16 @@ const FETCH_MINTS = `
       id
       tokenId
       to
+    }
+  }
+`;
+
+const FETCH_ROOM_JOINS = `
+  query FetchRoomJoins($agentIds: [String!]!) {
+    roomJoineds(first: 1000, where: { agentId_in: $agentIds }) {
+      id
+      roomId
+      agentId
     }
   }
 `;
@@ -45,7 +57,8 @@ const InvestorSelection = () => {
   const router = useRouter();
   const [tokenIds, setTokenIds] = useState<bigint[]>([]);
 
-  const mintsQuery: any = useQuery({
+  // Fetch mints
+  const mintsQuery:any = useQuery({
     queryKey: ["mints"],
     queryFn: async () => {
       const response = await request<{
@@ -59,6 +72,24 @@ const InvestorSelection = () => {
       setTokenIds(ids);
       return response.transfers;
     },
+  });
+
+  // Convert BigInt array to string array for query key
+  const tokenIdsForKey = tokenIds.map((id) => id.toString());
+
+  // Fetch room joins to filter out active agents
+  const roomJoinsQuery:any = useQuery({
+    queryKey: ["roomJoins", tokenIdsForKey],
+    queryFn: async () => {
+      if (!mintsQuery.data) return { roomJoineds: [] };
+
+      const agentIds = mintsQuery.data.map((t:any) => t.tokenId);
+      const response = await request(SUBGRAPH_URL_FOR_ROOMS, FETCH_ROOM_JOINS, {
+        agentIds,
+      });
+      return response;
+    },
+    enabled: !!mintsQuery.data,
   });
 
   const agentDataReads = useReadContracts({
@@ -80,8 +111,18 @@ const InvestorSelection = () => {
   });
 
   const processedAgents = React.useMemo(() => {
-    if (!agentDataReads.data || !agentExtraDataReads.data || !mintsQuery.data)
+    if (
+      !agentDataReads.data ||
+      !agentExtraDataReads.data ||
+      !mintsQuery.data ||
+      !roomJoinsQuery.data
+    )
       return [];
+
+    // Create a set of agent IDs that are already in rooms
+    const activeAgentIds = new Set(
+      (roomJoinsQuery.data.roomJoineds || []).map((join: any) => join.agentId)
+    );
 
     return agentDataReads.data
       .map((dataResult: any, index) => {
@@ -91,6 +132,11 @@ const InvestorSelection = () => {
         if (extraDataResult.status !== "success" || !extraDataResult.result)
           return null;
 
+        const tokenId = mintsQuery.data[index].tokenId;
+
+        // Skip if agent is already in a room
+        if (activeAgentIds.has(tokenId)) return null;
+
         const [name, description, model] = dataResult.result;
         const [agentType, riskLevel, investmentAmount, preferredAssets] =
           extraDataResult.result;
@@ -98,7 +144,7 @@ const InvestorSelection = () => {
         if (agentType !== 1) return null;
 
         return {
-          id: mintsQuery.data[index].tokenId,
+          id: tokenId,
           name,
           description,
           model,
@@ -108,7 +154,12 @@ const InvestorSelection = () => {
         };
       })
       .filter((agent): agent is NonNullable<typeof agent> => agent !== null);
-  }, [agentDataReads.data, agentExtraDataReads.data, mintsQuery.data]);
+  }, [
+    agentDataReads.data,
+    agentExtraDataReads.data,
+    mintsQuery.data,
+    roomJoinsQuery.data,
+  ]);
 
   const getRiskLabel = (level: number) => {
     switch (level) {
@@ -131,18 +182,51 @@ const InvestorSelection = () => {
 
   if (
     mintsQuery.isLoading ||
+    roomJoinsQuery.isLoading ||
     agentDataReads.isLoading ||
     agentExtraDataReads.isLoading
   ) {
     return (
-      <div className="text-center py-8">Loading your investor agents...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
+          <p className="text-gray-600">Loading available investor agents...</p>
+        </div>
+      </div>
     );
   }
 
-  if (mintsQuery.isError || agentDataReads.error || agentExtraDataReads.error) {
+  if (
+    mintsQuery.isError ||
+    agentDataReads.error ||
+    agentExtraDataReads.error ||
+    roomJoinsQuery.error
+  ) {
     return (
       <div className="text-center py-8 text-red-500">
         Error loading investor agents
+      </div>
+    );
+  }
+
+  if (processedAgents.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Select an Investor Agent</h1>
+        <Card className="text-center py-12">
+          <CardContent>
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Users className="h-12 w-12 text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900">
+                No Available Agents
+              </h3>
+              <p className="text-sm text-gray-500">
+                All investor agents are currently active in rooms or no investor
+                agents were found.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

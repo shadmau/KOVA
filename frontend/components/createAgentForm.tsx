@@ -39,16 +39,9 @@ import { PinataService } from "@/lib/pinata";
 import AgentAvailabilityDialog from "./AgentAvailabilityDialog";
 import { useRouter } from "next/navigation";
 
-const SUPPORTED_ASSETS = [
-  "BTC",
-  "ETH",
-  "USDT",
-  "USDC",
-  "BNB",
-  "XRP",
-  "SOL",
-  "DOT",
-] as const;
+const SUPPORTED_ASSETS = ["USDT"] as const;
+const MIN_INVESTMENT = 1;
+const MAX_INVESTMENT = 100;
 
 type SupportedAsset = (typeof SUPPORTED_ASSETS)[number];
 const RISK_LEVEL_MAPPING = {
@@ -145,10 +138,12 @@ interface FormData {
 
 const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
+
+  const [isStepValid, setIsStepValid] = useState(false);
   const [txStatus, setTxStatus] = useState<
     "loading" | "success" | "error" | null
   >(null);
-const router = useRouter();
+  const router = useRouter();
   const [mintedTokenId, setMintedTokenId] = useState<bigint | null>(null);
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -187,19 +182,24 @@ const router = useRouter();
     defaultValues: {
       agentRole: "",
       riskLevel: "LOW",
-      cryptoAssets: "BTC",
+      cryptoAssets: "USDT",
       agentName: "",
       minInvestment: "",
-      maxInvestment: "", // Add default value
+      maxInvestment: "",
       maxLossTolerance: 5,
       expectedReturn: 10,
       tradingStrategy: "",
       additionalNotes: "",
-      tradingGoals: "", // Add default value
+      tradingGoals: "",
     },
   });
 
   const agentRole = watch("agentRole");
+  const watchedFields = {
+    step1: watch(["agentRole", "riskLevel", "agentName", "tradingGoals"]),
+    step2: watch(["maxInvestment", "minInvestment", "cryptoAssets"]),
+    step3: watch(["tradingStrategy", "additionalNotes"]),
+  };
 
   const handleNextStep = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent form submission
@@ -220,7 +220,7 @@ const router = useRouter();
         riskLevel: riskLevelValue.toString(),
         tokenId: mintedTokenId.toString(),
       });
-     router.push(`/agents?${queryParams.toString()}`);
+      router.push(`/agents?${queryParams.toString()}`);
     } else if (agentRole === "Trader" && mintedTokenId) {
       setShowAvailabilityDialog(true);
     }
@@ -263,6 +263,11 @@ const router = useRouter();
 
     return await PinataService.uploadJSON(promptData);
   };
+  const formData = watch();
+  useEffect(() => {
+    console.log("Form data updated:", formData);
+  }, [formData]);
+
   const onSubmit = async (data: FormData) => {
     try {
       setTxStatus("loading");
@@ -287,7 +292,7 @@ const router = useRouter();
           {
             name: data.agentName,
             description: data.additionalNotes,
-            model: "gpt-4",
+            model: "Llama 3.3 70B",
             userPromptURI: `ipfs://${userPromptURI}`,
             systemPromptURI: "",
             promptsEncrypted: false,
@@ -326,7 +331,7 @@ const router = useRouter();
           log.topics[0] ===
             "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && // Transfer event signature
           log.topics[1] ===
-            "0x0000000000000000000000000000000000000000000000000000000000000000", // from zero address
+            "0x0000000000000000000000000000000000000000000000000000000000000000" // from zero address
       );
 
       if (transferEvent) {
@@ -492,138 +497,204 @@ const router = useRouter();
       </div>
     </div>
   );
+  useEffect(() => {
+    const validateStep = () => {
+      switch (currentStep) {
+        case 1:
+          const [role, risk, name, goals] = watchedFields.step1;
+          setIsStepValid(!!role && !!risk && !!name && !!goals);
+          break;
+        case 2:
+          const [maxInv, minInv, assets] = watchedFields.step2;
+          const agentRole = watch("agentRole");
+          if (agentRole === "Trader") {
+            const investment = Number(minInv);
+            setIsStepValid(
+              !!assets &&
+                investment >= MIN_INVESTMENT &&
+                investment <= MAX_INVESTMENT
+            );
+          } else {
+            setIsStepValid(!!maxInv && !!assets);
+          }
+          break;
+        case 3:
+          const [strategy, notes] = watchedFields.step3;
+          const isTrader = watch("agentRole") === "Trader";
+          setIsStepValid(isTrader ? !!strategy : !!notes);
+          break;
+      }
+    };
 
-  const renderStep2 = () => {
+    validateStep();
+  }, [
+    ...watchedFields.step1,
+    ...watchedFields.step2,
+    ...watchedFields.step3,
+    currentStep,
+  ]);
+
+  const renderInvestmentField = () => {
+    const agentRole = watch("agentRole");
+
+    if (agentRole === "Trader") {
+      return (
+        <div className="space-y-2">
+          <Label className="text-gray-500">Investment per Trade (USDT)</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+              $
+            </span>
+            <Controller
+              name="minInvestment"
+              control={control}
+              rules={{
+                required: true,
+                min: MIN_INVESTMENT,
+                max: MAX_INVESTMENT,
+              }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  className="pl-8 pr-4 border-gray-300"
+                  placeholder={`Enter amount (${MIN_INVESTMENT}-${MAX_INVESTMENT} USDT)`}
+                />
+              )}
+            />
+          </div>
+          <p className="text-red-500 text-sm">
+            Minimum investment per trade is {MIN_INVESTMENT} USDT
+          </p>
+        </div>
+      );
+    }
+
     return (
-      <div className="space-y-6">
-        {agentRole === "Investor" ? (
-          <>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <Label className="text-gray-500">Maximum Investment</Label>
-                <Controller
-                  name="maxInvestment"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="number"
-                      placeholder="Enter amount"
-                      className="mt-2 text-gray-500"
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-gray-500">Preferred Assets</Label>
-                <Controller
-                  name="cryptoAssets"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="mt-2 border-gray-300 text-gray-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SUPPORTED_ASSETS.map((asset) => (
-                          <SelectItem key={asset} value={asset}>
-                            {asset}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-gray-500">
-                Maximum Loss Tolerance (%)
-              </Label>
-              <Controller
-                name="maxLossTolerance"
-                control={control}
-                render={({ field }) => (
-                  <div className="space-y-2">
-                    <Slider
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={[field.value]}
-                      onValueChange={([value]) => field.onChange(value)}
-                    />
-                    <span className="text-sm font-semibold text-gray-500">
-                      {field.value}%
-                    </span>
-                  </div>
-                )}
+      <div className="grid grid-cols-2 gap-6">
+        <div>
+          <Label className="text-gray-500">Maximum Investment</Label>
+          <Controller
+            name="maxInvestment"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <Input
+                {...field}
+                type="number"
+                placeholder="Enter amount"
+                className="mt-2 text-gray-500"
               />
-            </div>
-            <div>
-              <Label className="text-gray-500">Expected Return (%)</Label>
-              <Controller
-                name="expectedReturn"
-                control={control}
-                render={({ field }) => (
-                  <div className="space-y-2">
-                    <Slider
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={[field.value]}
-                      onValueChange={([value]) => field.onChange(value)}
-                    />
-                    <span className="text-sm text-gray-500 font-semibold">
-                      {field.value}%
-                    </span>
-                  </div>
-                )}
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <Label className="text-gray-500">Minimum Investment</Label>
-              <Controller
-                name="minInvestment"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="Enter amount"
-                    className="mt-2 text-gray-500"
-                  />
-                )}
-              />
-            </div>
-            <div>
-              <Label className="text-gray-500">Preferred Assets</Label>
-              <Controller
-                name="cryptoAssets"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="mt-2 border-gray-300 text-gray-500">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORTED_ASSETS.map((asset) => (
-                        <SelectItem key={asset} value={asset}>
-                          {asset}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-          </>
-        )}
+            )}
+          />
+        </div>
+        <div>
+          <Label className="text-gray-500">Preferred Assets</Label>
+          <Controller
+            name="cryptoAssets"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger className="mt-2 border-gray-300 text-gray-500">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_ASSETS.map((asset) => (
+                    <SelectItem key={asset} value={asset}>
+                      {asset}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
       </div>
     );
   };
+
+  // Update renderStep2 to use the new investment field
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      {renderInvestmentField()}
+      {watch("agentRole") === "Investor" && (
+        <>
+          <div>
+            <Label className="text-gray-500">Maximum Loss Tolerance (%)</Label>
+            <Controller
+              name="maxLossTolerance"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[field.value]}
+                    onValueChange={([value]) => field.onChange(value)}
+                  />
+                  <span className="text-sm font-semibold text-gray-500">
+                    {field.value}%
+                  </span>
+                </div>
+              )}
+            />
+          </div>
+          <div>
+            <Label className="text-gray-500">Expected Return (%)</Label>
+            <Controller
+              name="expectedReturn"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[field.value]}
+                    onValueChange={([value]) => field.onChange(value)}
+                  />
+                  <span className="text-sm text-gray-500 font-semibold">
+                    {field.value}%
+                  </span>
+                </div>
+              )}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // Update the form buttons to use isStepValid
+  const renderFormButtons = () => (
+    <div className="flex justify-between mt-6">
+      {currentStep > 1 && (
+        <RainbowButton type="button" onClick={handlePreviousStep}>
+          Back
+        </RainbowButton>
+      )}
+      {currentStep < 3 ? (
+        <RainbowButton
+          type="button"
+          onClick={handleNextStep}
+          className="ml-auto"
+          disabled={!isStepValid}
+        >
+          Next
+        </RainbowButton>
+      ) : (
+        <RainbowButton
+          type="submit"
+          className="ml-auto"
+          disabled={!isStepValid}
+        >
+          Submit
+        </RainbowButton>
+      )}
+    </div>
+  );
 
   const renderStep3 = () => {
     return (
@@ -721,27 +792,7 @@ const router = useRouter();
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
-
-            <div className="flex justify-between mt-6">
-              {currentStep > 1 && (
-                <RainbowButton type="button" onClick={handlePreviousStep}>
-                  Back
-                </RainbowButton>
-              )}
-              {currentStep < 3 ? (
-                <RainbowButton
-                  type="button"
-                  onClick={handleNextStep}
-                  className="ml-auto"
-                >
-                  Next
-                </RainbowButton>
-              ) : (
-                <RainbowButton type="submit" className="ml-auto">
-                  Find Matches
-                </RainbowButton>
-              )}
-            </div>
+            {renderFormButtons()}
           </form>
         </CardContent>
       </Card>
