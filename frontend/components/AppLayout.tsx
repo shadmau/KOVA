@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import logo from "@/public/images/kova_logo.png";
 
 import {
   Tooltip,
@@ -23,6 +24,7 @@ import {
 import { useAccount, useDisconnect, useEnsName } from "wagmi";
 import WalletConnectionManager from "./WalletConnectionManager";
 import { RoomProvider } from "@/context/room";
+import Image from "next/image";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -263,7 +265,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <div className="flex h-full flex-col">
             <div className="flex h-16 items-center border-b px-4">
-              <Link href="/" className="flex items-center gap-2 pl-4">
+              <Link href="/" className="flex items-center gap-2 pl-2">
+                <Image src={logo} alt="Logo" className="h-8 w-8" />{" "}
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   KOVA
                 </span>

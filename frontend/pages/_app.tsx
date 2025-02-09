@@ -22,18 +22,9 @@ const wagmiConfig = getDefaultConfig({
   ssr: true,
 });
 
-// Create QueryClient outside component
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      refetchOnWindowFocus: false,
-      retry: 2,
-    },
-  },
-});
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
+  const queryClient = new QueryClient();
   const isHomePage = router.pathname === "/";
 
   const Layout = isHomePage

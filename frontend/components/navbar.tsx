@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-
+import logo from "@/public/images/kova_logo.png"
+import Image from "next/image";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -20,8 +21,10 @@ const Navbar = () => {
           {/* Logo */}
           <div className="pl-5">
             <Link href="/" className="flex items-center">
+              <Image src={logo} alt="Logo" className="h-8 w-8" />{" "}
+              {/* Add your logo image here */}
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                KoVa
+                KOVA
               </span>
             </Link>
           </div>

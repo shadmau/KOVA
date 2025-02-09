@@ -249,7 +249,7 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Buy">Buy</SelectItem>
-                    <SelectItem value="Sell">Sell</SelectItem>
+                    <SelectItem disabled value="Sell">Sell</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

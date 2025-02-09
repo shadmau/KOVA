@@ -58,7 +58,7 @@ const InvestorSelection = () => {
   const [tokenIds, setTokenIds] = useState<bigint[]>([]);
 
   // Fetch mints
-  const mintsQuery:any = useQuery({
+  const mintsQuery: any = useQuery({
     queryKey: ["mints"],
     queryFn: async () => {
       const response = await request<{
@@ -72,23 +72,31 @@ const InvestorSelection = () => {
       setTokenIds(ids);
       return response.transfers;
     },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    retry: 2,
+    refetchInterval: 60 * 1000, // Refetch every minute
   });
 
   // Convert BigInt array to string array for query key
   const tokenIdsForKey = tokenIds.map((id) => id.toString());
 
   // Fetch room joins to filter out active agents
-  const roomJoinsQuery:any = useQuery({
+  const roomJoinsQuery: any = useQuery({
     queryKey: ["roomJoins", tokenIdsForKey],
     queryFn: async () => {
       if (!mintsQuery.data) return { roomJoineds: [] };
 
-      const agentIds = mintsQuery.data.map((t:any) => t.tokenId);
+      const agentIds = mintsQuery.data.map((t: any) => t.tokenId);
       const response = await request(SUBGRAPH_URL_FOR_ROOMS, FETCH_ROOM_JOINS, {
         agentIds,
       });
       return response;
     },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    retry: 2,
+    refetchInterval: 60 * 1000, // Refetch every minute
     enabled: !!mintsQuery.data,
   });
 

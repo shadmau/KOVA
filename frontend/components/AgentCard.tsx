@@ -70,6 +70,10 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
   const { data: roomData } = useQuery({
     queryKey: ["roomCreated", agent.tokenId.toString()],
     queryFn: () => fetchRoomCreated(agent.tokenId.toString()),
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    retry: 2,
+    refetchInterval: 60 * 1000, // Refetch every minute
     enabled: agent.agentType === 0, // Only enabled for traders
   });
 
@@ -77,6 +81,10 @@ export const AgentCard = ({ agent, contractAddress }: any) => {
   const { data: tradingStrategy } = useQuery({
     queryKey: ["tradingStrategy", agent.userPromptURI],
     queryFn: () => fetchTradingStrategy(agent.userPromptURI || ""),
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    retry: 2,
+    refetchInterval: 60 * 1000, // Refetch every minute
     enabled: agent.agentType === 0 && !!agent.userPromptURI,
   });
   console.log("Trading strategies ", tradingStrategy);
