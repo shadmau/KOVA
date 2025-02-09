@@ -11,28 +11,44 @@ import { Wallet } from "lucide-react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 
-const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
+const WalletConnectionManager = ({
+  shouldShowConnectDialog,
+}: {
+  shouldShowConnectDialog: boolean;
+}) => {
   const [isOpen, setIsOpen] = React.useState(false);
-
+  const [hasAttemptedConnection, setHasAttemptedConnection] =
+    React.useState(false);
   const { openConnectModal } = useConnectModal();
-    const { isConnected } = useAccount();
+  const { isConnected } = useAccount();
+  const [isMobile, setIsMobile] = React.useState(false);
 
-
-  // Check if screen is mobile
-    const [isMobile, setIsMobile] = React.useState(false);
-
-
+  // Handle mobile detection
   React.useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Handle connection persistence
+  React.useEffect(() => {
+    // Only show dialog if user hasn't attempted connection and is not connected
+    if (shouldShowConnectDialog && !hasAttemptedConnection && !isConnected) {
+      setIsOpen(true);
+    } else if (isConnected) {
+      setIsOpen(false);
+      setHasAttemptedConnection(true);
+    }
+  }, [shouldShowConnectDialog, isConnected, hasAttemptedConnection]);
 
+  // Handle connection modal
+  const handleConnectClick = () => {
+    setHasAttemptedConnection(true);
+    openConnectModal?.();
+  };
 
   // Mobile warning component
   const MobileWarning = () => (
@@ -67,11 +83,11 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
   return (
     <>
       {isMobile && <MobileWarning />}
-
       <Dialog
-        open={shouldShowConnectDialog||isOpen}
+        open={isOpen}
         onOpenChange={(open) => {
-          if (!isConnected) {
+          // Only allow closing if connected or if user has attempted connection
+          if (isConnected || hasAttemptedConnection) {
             setIsOpen(open);
           }
         }}
@@ -92,7 +108,7 @@ const WalletConnectionManager = ({ shouldShowConnectDialog }: any) => {
                   Connect your wallet to access all features
                 </p>
               </div>
-              <Button className="w-full" onClick={openConnectModal}>
+              <Button className="w-full" onClick={handleConnectClick}>
                 Connect Wallet
               </Button>
             </div>
