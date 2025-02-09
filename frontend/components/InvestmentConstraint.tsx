@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
-const InvestmentConstraint = ({ onChange }) => {
+const InvestmentConstraint = ({ onChange }:any) => {
   const [amount, setAmount] = useState("100");
   const [unit, setUnit] = useState("USDT");
   const [frequency, setFrequency] = useState("per trade");

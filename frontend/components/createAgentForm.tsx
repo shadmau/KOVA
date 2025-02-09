@@ -26,6 +26,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Lock,
+  Upload,
 } from "lucide-react";
 import {
   Dialog,
@@ -38,6 +40,7 @@ import TradingStrategyForm from "./TradingStrategyForm";
 import { PinataService } from "@/lib/pinata";
 import AgentAvailabilityDialog from "./AgentAvailabilityDialog";
 import { useRouter } from "next/navigation";
+import InvestmentConstraint from "./InvestmentConstraint";
 
 const SUPPORTED_ASSETS = ["USDT"] as const;
 const MIN_INVESTMENT = 1;
@@ -55,6 +58,74 @@ interface TransactionStatusProps {
   hash?: string | null;
   onClose: () => void;
 }
+
+const PrivacySelection = ({ value, onChange }:any) => (
+  <div className="space-y-4">
+    <Label className="text-gray-500">Data Privacy</Label>
+    <div className="grid grid-cols-2 gap-4">
+      <div
+        className={`p-4 rounded-lg border cursor-pointer ${
+          value === "public"
+            ? "border-purple-600 bg-purple-300/20"
+            : "border-gray-300"
+        }`}
+        onClick={() => onChange("public")}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Upload
+            className={`w-5 h-5 ${
+              value === "public" ? "text-purple-500" : "text-gray-500"
+            }`}
+          />
+          <span
+            className={`font-medium ${
+              value === "public" ? "text-purple-600" : "text-gray-500"
+            }`}
+          >
+            Public (IPFS)
+          </span>
+        </div>
+        <p
+          className={`text-sm ${
+            value === "public" ? "text-purple-600" : "text-gray-500"
+          }`}
+        >
+          Your data will be stored on IPFS and will be publicly accessible
+        </p>
+      </div>
+      <div
+        className={`p-4 rounded-lg border cursor-pointer ${
+          value === "private"
+            ? "border-purple-600 bg-purple-300/20"
+            : "border-gray-300"
+        }`}
+        onClick={() => onChange("private")}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Lock
+            className={`w-5 h-5 ${
+              value === "private" ? "text-purple-500" : "text-gray-500"
+            }`}
+          />
+          <span
+            className={`font-medium ${
+              value === "private" ? "text-purple-600" : "text-gray-500"
+            }`}
+          >
+            Private (Nillion)
+          </span>
+        </div>
+        <p
+          className={`text-sm ${
+            value === "private" ? "text-purple-600" : "text-gray-500"
+          }`}
+        >
+          Your data will be encrypted and stored privately on Nillion
+        </p>
+      </div>
+    </div>
+  </div>
+);
 
 const TransactionStatus = ({
   isOpen,
@@ -128,17 +199,19 @@ interface FormData {
   agentName: string;
   cryptoAssets: SupportedAsset;
   minInvestment: string;
-  maxInvestment: string; // Add this field
+  maxInvestment: string;
   maxLossTolerance: number;
   expectedReturn: number;
   tradingStrategy: string;
+  constraints: string;
   additionalNotes: string;
-  tradingGoals: string; // Add this field
+  tradingGoals: string;
 }
 
 const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
 
+  const [privacy, setPrivacy] = useState("public");
   const [isStepValid, setIsStepValid] = useState(false);
   const [txStatus, setTxStatus] = useState<
     "loading" | "success" | "error" | null
@@ -177,10 +250,11 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      agentRole: "",
+      agentRole: "Investor",
       riskLevel: "LOW",
       cryptoAssets: "USDT",
       agentName: "",
@@ -188,6 +262,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
       maxInvestment: "",
       maxLossTolerance: 5,
       expectedReturn: 10,
+      constraints: "",
       tradingStrategy: "",
       additionalNotes: "",
       tradingGoals: "",
@@ -197,8 +272,8 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   const agentRole = watch("agentRole");
   const watchedFields = {
     step1: watch(["agentRole", "riskLevel", "agentName", "tradingGoals"]),
-    step2: watch(["maxInvestment", "minInvestment", "cryptoAssets"]),
-    step3: watch(["tradingStrategy", "additionalNotes"]),
+    step2: watch(["minInvestment"]),
+    step3: watch(["tradingStrategy", "constraints"]),
   };
 
   const handleNextStep = (e: React.MouseEvent) => {
@@ -250,7 +325,8 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         ...promptData,
         maxLossTolerance: formData.maxLossTolerance,
         expectedReturn: formData.expectedReturn,
-        constraints: `maximum investment per trade: ${formData.maxInvestment} USDT`,
+        constraints: formData.constraints,
+        // constraints: `maximum investment per trade: ${formData.maxInvestment} USDT`,
       };
     }
 
@@ -263,10 +339,6 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
 
     return await PinataService.uploadJSON(promptData);
   };
-  const formData = watch();
-  useEffect(() => {
-    console.log("Form data updated:", formData);
-  }, [formData]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -505,23 +577,19 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
           setIsStepValid(!!role && !!risk && !!name && !!goals);
           break;
         case 2:
-          const [maxInv, minInv, assets] = watchedFields.step2;
+          const [minInv] = watchedFields.step2;
           const agentRole = watch("agentRole");
           if (agentRole === "Trader") {
             const investment = Number(minInv);
             setIsStepValid(
-              !!assets &&
-                investment >= MIN_INVESTMENT &&
-                investment <= MAX_INVESTMENT
+              investment >= MIN_INVESTMENT && investment <= MAX_INVESTMENT
             );
-          } else {
-            setIsStepValid(!!maxInv && !!assets);
           }
           break;
         case 3:
-          const [strategy, notes] = watchedFields.step3;
+          const [strategy, constraints] = watchedFields.step3;
           const isTrader = watch("agentRole") === "Trader";
-          setIsStepValid(isTrader ? !!strategy : !!notes);
+          setIsStepValid(isTrader ? !!strategy : !!constraints);
           break;
       }
     };
@@ -540,7 +608,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
     if (agentRole === "Trader") {
       return (
         <div className="space-y-2">
-          <Label className="text-gray-500">Investment per Trade (USDT)</Label>
+          <Label className="text-gray-500">Minimum Investment Amount</Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
               $
@@ -563,55 +631,14 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
               )}
             />
           </div>
-          <p className="text-red-500 text-sm">
+          <p className="text-yellow-500 text-sm">
             Minimum investment per trade is {MIN_INVESTMENT} USDT
           </p>
         </div>
       );
     }
 
-    return (
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <Label className="text-gray-500">Maximum Investment</Label>
-          <Controller
-            name="maxInvestment"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <Input
-                {...field}
-                type="number"
-                placeholder="Enter amount"
-                className="mt-2 text-gray-500"
-              />
-            )}
-          />
-        </div>
-        <div>
-          <Label className="text-gray-500">Preferred Assets</Label>
-          <Controller
-            name="cryptoAssets"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="mt-2 border-gray-300 text-gray-500">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPORTED_ASSETS.map((asset) => (
-                    <SelectItem key={asset} value={asset}>
-                      {asset}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-      </div>
-    );
+    return null;
   };
 
   // Update renderStep2 to use the new investment field
@@ -697,55 +724,52 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
   );
 
   const renderStep3 = () => {
+    const agentRole = watch("agentRole");
+
     return (
       <div className="space-y-6">
         {agentRole === "Investor" ? (
-          <div>
-            <Label className="text-gray-500">Additional Notes</Label>
-            <Controller
-              name="additionalNotes"
-              control={control}
-              render={({ field }) => (
-                <Textarea
-                  {...field}
-                  placeholder="Any additional preferences or requirements"
-                  className="mt-2 min-h-[100px] text-gray-500"
-                />
-              )}
-            />
-          </div>
+          <Controller
+            name="constraints"
+            control={control}
+            render={({ field }) => (
+              <InvestmentConstraint
+                onChange={({ constraint, maxInvestment }:any) => {
+                  field.onChange(constraint);
+                  setValue("maxInvestment", maxInvestment);
+                }}
+              />
+            )}
+          />
         ) : (
           <>
-            <div>
-              <Label className="text-gray-500 font-semibold mb-2">
-                Trading Strategy
-              </Label>
-              <Controller
-                name="tradingStrategy"
-                control={control}
-                render={({ field }) => (
-                  <TradingStrategyForm onChange={field.onChange} />
-                )}
-              />
-            </div>
-            <div>
-              <Label className="text-gray-500 font-semibold">
-                Additional Notes
-              </Label>
-              <Controller
-                name="additionalNotes"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    {...field}
-                    placeholder="Any additional preferences or requirements"
-                    className="mt-2 min-h-[100px] text-gray-500"
-                  />
-                )}
-              />
-            </div>
+            <Controller
+              name="tradingStrategy"
+              control={control}
+              render={({ field }) => (
+                <TradingStrategyForm onChange={field.onChange} />
+              )}
+            />
           </>
         )}
+        <PrivacySelection value={privacy} onChange={setPrivacy} />
+
+        <div>
+          <Label className="text-gray-500 font-semibold">
+            Additional Notes
+          </Label>
+          <Controller
+            name="additionalNotes"
+            control={control}
+            render={({ field }) => (
+              <Textarea
+                {...field}
+                placeholder="Any additional preferences or requirements"
+                className="mt-2 min-h-[100px] text-gray-500"
+              />
+            )}
+          />
+        </div>
       </div>
     );
   };
@@ -782,7 +806,7 @@ const CreateAgentForm = ({ contractAddress }: CreateAgentFormProps) => {
         <div className="flex justify-between mt-2 text-sm text-gray-500 font-semibold">
           <span>Basic Info</span>
           <span>Investment Preferences</span>
-          <span>Strategy</span>
+          <span>{agentRole==="Investor"?"Constraints":"Strategy"}</span>
         </div>
       </div>
 
