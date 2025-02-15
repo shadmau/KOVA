@@ -4,8 +4,6 @@ import {
   User,
   BarChart2,
   Shield,
-  CreditCard,
-  Settings,
   Menu,
   Copy,
   ExternalLink,
@@ -13,8 +11,9 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import logo from "@/public/images/kova_logo.png";
 
 import {
   Tooltip,
@@ -25,6 +24,7 @@ import {
 import { useAccount, useDisconnect, useEnsName } from "wagmi";
 import WalletConnectionManager from "./WalletConnectionManager";
 import { RoomProvider } from "@/context/room";
+import Image from "next/image";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -48,18 +48,63 @@ interface Breadcrumb {
   href: string;
   label: string;
 }
+
+
+
+const MobileWarning: React.FC = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+    <div className="mx-4 rounded-lg bg-white p-6 text-center dark:bg-gray-800">
+      <div className="mb-4 text-yellow-500">
+        <svg
+          className="mx-auto h-12 w-12"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+        Desktop Experience Recommended
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-300">
+        For the best experience with our dApp, please switch to a desktop
+        browser.
+      </p>
+    </div>
+  </div>
+);
 const WalletStatus = () => {
-  const { address } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const { data: ensName } = useEnsName({ address });
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = React.useState(false);
+  
+  const [mounted, setMounted] = React.useState(false);
 
-  const shortenAddress = (addr: any) => {
+  // Handle mounting state
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until component is mounted
+  if (!mounted) return null;
+
+  // Don't render if not connected
+  if (!isConnected || !address || status === "reconnecting") return null;
+
+
+  const shortenAddress = (addr: string) => {
     return `${addr?.slice(0, 6)}...${addr?.slice(-4)}`;
   };
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(address as any);
+    navigator.clipboard.writeText(address as string);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -68,18 +113,13 @@ const WalletStatus = () => {
     <TooltipProvider>
       <div className="flex items-center gap-2">
         <div className="relative flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 px-4 py-1 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-purple-900/30 dark:via-purple-800/30 dark:to-purple-900/30 border border-purple-200/50 dark:border-purple-700/30 backdrop-blur-sm">
-          {/* Glowing dot */}
           <div className="relative">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             <div className="absolute inset-0 h-2 w-2 rounded-full bg-green-400 animate-ping opacity-75" />
           </div>
-
-          {/* Address display */}
           <span className="text-sm font-medium bg-gradient-to-r from-purple-700 to-purple-500 bg-clip-text text-transparent dark:from-purple-300 dark:to-purple-400">
             {ensName || shortenAddress(address)}
           </span>
-
-          {/* Action buttons */}
           <div className="flex gap-1 ml-2">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -142,30 +182,33 @@ const WalletStatus = () => {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isMobileOpen, setIsMobileOpen] = React.useState<boolean>(false);
+  const [isMobile, setIsMobile] = React.useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { address, isConnected } = useAccount();
-  const basePath: any = pathname.split("?")[0];
+  const { address, isConnected, status } = useAccount();
+  const [isReady, setIsReady] = React.useState(false);
   const menuItems: MenuItem[] = [
     { icon: Home, label: "Home", href: "/" },
     { icon: User, label: "Create Agent", href: "/createAgent" },
     { icon: BarChart2, label: "Profile", href: "/profile" },
     { icon: Shield, label: "Agents", href: "/agents" },
-    { icon: CreditCard, label: "Payment", href: "/payment" },
-    { icon: Settings, label: "Team Settings", href: "/settings" },
   ];
-
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1000);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+   React.useEffect(() => {
+     if (status !== "reconnecting") {
+       setIsReady(true);
+     }
+   }, [status]);
   const getBreadcrumbs = (): Breadcrumb[] => {
-    const paths = basePath.split("/").filter((p: any) => p);
-    return paths.map((path: any, index: any) => {
-      const href =
-        "/" +
-        paths.slice(0, index + 1).join("/") +
-        (index === paths.length - 1
-          ? searchParams.toString()
-            ? `?${searchParams.toString()}`
-            : ""
-          : "");
+    const paths = pathname.split("/").filter((p) => p);
+    return paths.map((path, index) => {
+      const href = "/" + paths.slice(0, index + 1).join("/");
       const label = path.charAt(0).toUpperCase() + path.slice(1);
       return { href, label };
     });
@@ -254,14 +297,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <RoomProvider>
       <div className="flex min-h-screen">
+        {isMobile && <MobileWarning />}
         <WalletConnectionManager
-          shouldShowConnectDialog={!isConnected && !address}
+          shouldShowConnectDialog={!isConnected && !address && isReady}
         />
         {/* Sidebar - Desktop */}
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <div className="flex h-full flex-col">
             <div className="flex h-16 items-center border-b px-4">
-              <Link href="/" className="flex items-center gap-2 pl-4">
+              <Link href="/" className="flex items-center gap-2 pl-2">
+                <Image src={logo} alt="Logo" className="h-8 w-8" />{" "}
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   KOVA
                 </span>
@@ -313,7 +358,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <div className="flex flex-1 items-center gap-4">
               <Breadcrumbs />
             </div>
-            {isConnected && <WalletStatus />}
+            {isReady && <WalletStatus />}
           </header>
           <main className="flex-1">{children}</main>
         </div>

@@ -26,6 +26,121 @@ interface Strategy {
   condition: string;
   frequency: string;
 }
+const FIXED_ASSETS = [
+  {
+    value: "cbBTC",
+    label: "cbBTC",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/32731.png",
+  },
+  {
+    value: "BRETT",
+    label: "BRETT",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/31343.png",
+  },
+  {
+    value: "VIRTUAL",
+    label: "VIRTUAL",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/29420.png",
+  },
+  {
+    value: "AERO",
+    label: "AERO",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/29270.png",
+  },
+  {
+    value: "AIXBT",
+    label: "AIXBT",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/34103.png",
+  },
+  {
+    value: "DOGE",
+    label: "DOGE",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/74.png",
+  },
+  {
+    value: "AAVE",
+    label: "AAVE",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/7278.png",
+  },
+  {
+    value: "MIGGLES",
+    label: "MIGGLES",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/32289.png",
+  },
+  {
+    value: "WBTC",
+    label: "WBTC",
+    imageUrl: "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png",
+  },
+] as const;
+
+const VOLUME_BASED_ASSETS = [
+  {
+    value: "1st highest volume coin",
+    label: "1st highest volume coin",
+    imageUrl: null,
+  },
+  {
+    value: "2nd highest volume coin",
+    label: "2nd highest volume coin",
+    imageUrl: null,
+  },
+  {
+    value: "3rd highest volume coin",
+    label: "3rd highest volume coin",
+    imageUrl: null,
+  },
+] as const;
+
+// Custom SelectValue component for asset display
+const AssetSelectValue = ({ value }: { value: string }) => {
+  const asset = [...FIXED_ASSETS, ...VOLUME_BASED_ASSETS].find(
+    (a) => a.value === value
+  );
+
+  if (!asset) return <span className="text-gray-500">Select asset</span>;
+
+  return (
+    <div className="flex items-center gap-2">
+      {asset.imageUrl && (
+        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            src={asset.imageUrl}
+            alt={`${asset.label} Logo`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      <span>{asset.label}</span>
+    </div>
+  );
+};
+
+// Custom SelectItem component for asset options
+const AssetSelectItem = ({
+  asset,
+}: {
+  asset: (typeof FIXED_ASSETS)[number] | (typeof VOLUME_BASED_ASSETS)[number];
+}) => (
+  <SelectItem value={asset.value} className="flex items-center gap-2 py-2">
+    <div className="flex items-center gap-2 w-full">
+      {asset.imageUrl && (
+        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            src={asset.imageUrl}
+            alt={`${asset.label} Logo`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      <span className="flex-grow">{asset.label}</span>
+    </div>
+  </SelectItem>
+);
+
+interface TradingStrategyFormProps {
+  onChange: (value: string) => void;
+}
 
 const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
   const [nextId, setNextId] = useState(1);
@@ -134,7 +249,7 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Buy">Buy</SelectItem>
-                    <SelectItem value="Sell">Sell</SelectItem>
+                    <SelectItem disabled value="Sell">Sell</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -167,28 +282,16 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
                   }
                 >
                   <SelectTrigger className="focus:border-purple-400 border-gray-300">
-                    <SelectValue placeholder="Select asset" />
+                    <AssetSelectValue value={strategy.assetType} />
                   </SelectTrigger>
                   <SelectContent>
-                    {strategy.strategyType === "Volume-Based" ? (
-                      <>
-                        <SelectItem value="1st highest volume coin">
-                          1st highest volume coin
-                        </SelectItem>
-                        <SelectItem value="2nd highest volume coin">
-                          2nd highest volume coin
-                        </SelectItem>
-                        <SelectItem value="3rd highest volume coin">
-                          3rd highest volume coin
-                        </SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="BTC">BTC</SelectItem>
-                        <SelectItem value="ETH">ETH</SelectItem>
-                        <SelectItem value="BNB">BNB</SelectItem>
-                      </>
-                    )}
+                    {strategy.strategyType === "Volume-Based"
+                      ? VOLUME_BASED_ASSETS.map((asset) => (
+                          <AssetSelectItem key={asset.value} asset={asset} />
+                        ))
+                      : FIXED_ASSETS.map((asset) => (
+                          <AssetSelectItem key={asset.value} asset={asset} />
+                        ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -241,19 +344,9 @@ const TradingStrategyForm = ({ onChange }: TradingStrategyFormProps) => {
                       <SelectValue placeholder="Select frequency" />
                     </SelectTrigger>
                     <SelectContent>
-                      {strategy.strategyType === "Volume-Based" ? (
-                        <>
-                          <SelectItem value="1s">Every 1 second</SelectItem>
-                          <SelectItem value="10s">Every 10 seconds</SelectItem>
-                          <SelectItem value="60s">Every 60 seconds</SelectItem>
-                        </>
-                      ) : (
-                        <>
-                          <SelectItem value="1h">Every 1 hour</SelectItem>
-                          <SelectItem value="1d">Every 1 day</SelectItem>
-                          <SelectItem value="1w">Every 1 week</SelectItem>
-                        </>
-                      )}
+                      <SelectItem value="1s">Every 1 second</SelectItem>
+                      <SelectItem value="10s">Every 10 seconds</SelectItem>
+                      <SelectItem value="60s">Every 60 seconds</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

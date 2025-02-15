@@ -1,4 +1,3 @@
-import Navbar from "@/components/navbar";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import React, { useEffect } from "react";
@@ -10,9 +9,13 @@ import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { GlowingEffectCards } from "@/components/ui/GlowingEffectCards";
 import { useAccount } from "wagmi";
+import {
+  useConnectModal,
+} from "@rainbow-me/rainbowkit";
 
 export default function LoginPage() {
- const { isConnected } = useAccount();
+  const { isConnected } = useAccount();
+const { openConnectModal } = useConnectModal();
   const router = useRouter();
  useEffect(() => {
    if (isConnected) {
@@ -31,7 +34,6 @@ export default function LoginPage() {
       </Head>
 
       <main className="min-h-screen w-screen">
-        <Navbar/>
         <div className="min-h-screen">
           {/* Hero Section */}
           <div className="relative">
@@ -42,13 +44,16 @@ export default function LoginPage() {
               <div className="mx-auto max-w-5xl text-center">
                 {/* Aceternity UI Text Generate Effect */}
                 <h1 className="text-2xl md:text-4xl lg:text-9xl py-2 md:py-10 font-extrabold tracking-tight">
-                  <AuroraText>KovaAI</AuroraText>
+                  <AuroraText>KOVA</AuroraText>
                 </h1>
                 <span className="text-gray-500">
                   <TypingAnimation>{words}</TypingAnimation>
                 </span>
 
-                <div className="z-10 flex min-h-64 items-center justify-center">
+                <div
+                  className="z-10 flex min-h-64 items-center justify-center cursor-pointer"
+                  onClick={openConnectModal}
+                >
                   <AnimatedGradientText>
                     🎉 <hr className="mx-2 h-4 w-px shrink-0 bg-gray-300" />{" "}
                     <span
@@ -66,15 +71,15 @@ export default function LoginPage() {
           </div>
 
           {/* Features Section with glass morphism effect */}
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center mb-12">
+          <div className=" w-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 animate-gradient-slow">
+            <div className="text-center mb-12 sm:px-6 lg:px-8 pt-8 w-full mx-auto">
               <AnimatedGradientText>
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   Powerful Features for Smart Trading
                 </h2>
               </AnimatedGradientText>
             </div>
-            <div className="mt-10">
+            <div className="mt-10 sm:px-6 lg:px-12 pb-8">
               <GlowingEffectCards />
             </div>
           </div>

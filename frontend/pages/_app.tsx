@@ -8,25 +8,76 @@ import { http } from "wagmi";
 import { Toaster } from "sonner";
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
+import AppLayout from "@/components/AppLayout";
+import { useRouter } from "next/router";
+import Navbar from "@/components/navbar";
+const wagmiConfig = getDefaultConfig({
+  appName: "KOVA",
+  projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
+  chains: [baseSepolia],
+  transports: {
+    [baseSepolia.id]: http(),
+  },
+  syncConnectedChain: true,
+  ssr: true,
+});
+
 function MyApp({ Component, pageProps }: AppProps) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000, // 1 minute
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
-  const config = getDefaultConfig({
-    appName: "KOVA",
-    projectId: "25195dd15a9741bb3dc1f86d8f11cf1d",
-    chains: [baseSepolia],
-    transports: {
-      [baseSepolia.id]: http(),
-    },
-    syncConnectedChain: true, // This helps maintain connection state
-    // persister: null,
-  });
+  const router = useRouter();
+  const queryClient = new QueryClient();
+  const isHomePage = router.pathname === "/";
+
+  const Layout = isHomePage
+    ? ({ children }: { children: React.ReactNode }) => (
+        <>
+          <Head>
+            <link
+              rel="preload"
+              href="/fonts/AdelleSans-Regular.woff"
+              as="font"
+              crossOrigin=""
+            />
+            <link
+              rel="preload"
+              href="/fonts/AdelleSans-Regular.woff2"
+              as="font"
+              crossOrigin=""
+            />
+            <link
+              rel="preload"
+              href="/fonts/AdelleSans-Semibold.woff"
+              as="font"
+              crossOrigin=""
+            />
+            <link
+              rel="preload"
+              href="/fonts/AdelleSans-Semibold.woff2"
+              as="font"
+              crossOrigin=""
+            />
+
+            <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+            <link rel="icon" href="/favicons/icon.svg" type="image/svg+xml" />
+            <link
+              rel="apple-touch-icon"
+              href="/favicons/apple-touch-icon.png"
+            />
+            <link rel="manifest" href="/favicons/manifest.json" />
+
+            <title>KOVA</title>
+            <meta name="description" content="KOVA" />
+          </Head>
+          <WagmiProvider config={wagmiConfig}>
+            <QueryClientProvider client={queryClient}>
+              <RainbowKitProvider>
+                <Navbar />
+                {children}
+              </RainbowKitProvider>
+            </QueryClientProvider>
+          </WagmiProvider>
+        </>
+      )
+    : AppLayout;
 
   return (
     <>
@@ -64,10 +115,12 @@ function MyApp({ Component, pageProps }: AppProps) {
         <title>KOVA</title>
         <meta name="description" content="KOVA" />
       </Head>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider>
-            <Component {...pageProps} />
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
             <Toaster />
           </RainbowKitProvider>
         </QueryClientProvider>

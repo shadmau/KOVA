@@ -13,18 +13,54 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Gift, Key, Loader2, Users, Wallet } from "lucide-react";
 import contractAbi from "@/lib/contractAbis/AgentNFT.json";
 import agentRoomAbi from "@/lib/contractAbis/AgentRoom.json";
 import axios from "axios";
 import { toast } from "sonner";
 import { parseEther } from "viem";
 import { useRoom } from "@/context/room";
+import SecureRoomTransactions from "./SecureRoomTransactions";
+import { Card, CardContent } from "./ui/card";
 
 const CONTRACT_ADDRESS = process.env
   .NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`;
 const ROOM_ADDRESS = process.env
   .NEXT_PUBLIC_ROOM_AGENT_CONTRACT_ADDRESS as `0x${string}`;
+
+const StepCard = ({
+  title,
+  description,
+  icon: Icon,
+  isActive,
+  isCompleted,
+}:any) => (
+  <Card
+    className={`transition-all duration-200 ${
+      isActive ? "ring-2 ring-blue-500" : ""
+    } ${isCompleted ? "bg-green-50" : ""}`}
+  >
+    <CardContent className="p-6">
+      <div className="flex items-center space-x-4">
+        <div
+          className={`p-3 rounded-full ${
+            isActive ? "bg-blue-100" : "bg-gray-100"
+          } ${isCompleted ? "bg-green-100" : ""}`}
+        >
+          <Icon
+            className={`h-6 w-6 ${
+              isActive ? "text-blue-500" : "text-gray-500"
+            } ${isCompleted ? "text-green-500" : ""}`}
+          />
+        </div>
+        <div>
+          <h3 className="font-medium">{title}</h3>
+          <p className="text-sm text-gray-500">{description}</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const InvestorFlowDialog = ({
   isOpen,
@@ -39,6 +75,7 @@ const InvestorFlowDialog = ({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [transferHash, setTransferHash] = useState("");
+  const [isFaucetLoading, setIsFaucetLoading] = useState(false);
   const [approveHash, setApproveHash] = useState("");
   const [joinRoomHash, setJoinRoomHash] = useState("");
   const [showSecureRoomSetup, setShowSecureRoomSetup] = useState(false);
@@ -260,23 +297,141 @@ const InvestorFlowDialog = ({
     onClose();
   };
 
+  const handleFaucetRequest = async () => {
+    if (!address) return;
+
+    setIsFaucetLoading(true);
+    try {
+      const response = await axios.get(
+        `https://schrank.xyz/api/secure-room/faucet/${address}`
+      );
+      if (response.data.success) {
+        toast.success("Tokens received from faucet!");
+      } else {
+        toast.error("Failed to receive tokens from faucet");
+      }
+    } catch (error) {
+      toast.error("Error requesting tokens from faucet");
+    } finally {
+      setIsFaucetLoading(false);
+    }
+  };
+
+  const renderStepContent = () => {
+    if (step === 1) {
+      const showFaucetButton = balance && balance.value === BigInt(0);
+
+      return (
+        <div className="space-y-6">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-600">Required Investment</span>
+              <span className="font-medium">{maxInvestment} USDT</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Current Balance</span>
+              <span className="font-medium">
+                {balance ? balance.formatted : "0"} USDT
+              </span>
+            </div>
+          </div>
+
+          {showFaucetButton && (
+            <Button
+              onClick={handleFaucetRequest}
+              disabled={isFaucetLoading}
+              variant="outline"
+              className="w-full mb-2"
+            >
+              {isFaucetLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Gift className="mr-2 h-4 w-4" />
+              )}
+              Retrieve from Faucet
+            </Button>
+          )}
+
+          <Button
+            onClick={handleTransfer}
+            disabled={isLoading || isTransferPending}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+          >
+            {isLoading || isTransferPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Wallet className="mr-2 h-4 w-4" />
+            )}
+            Transfer Funds
+          </Button>
+        </div>
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <div className="space-y-6">
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-blue-800">
+              Please approve the contract to manage your agent. This is a
+              one-time approval needed for secure interactions.
+            </p>
+          </div>
+
+          <Button
+            onClick={handleApprove}
+            disabled={isLoading || isApprovePending}
+            className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+          >
+            {isLoading || isApprovePending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Key className="mr-2 h-4 w-4" />
+            )}
+            Approve Contract
+          </Button>
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div className="space-y-6">
+          <div className="p-4 bg-green-50 rounded-lg">
+            <p className="text-green-800">
+              You're all set! Click below to join the room and start your
+              journey.
+            </p>
+          </div>
+
+          <Button
+            onClick={handleJoinRoom}
+            disabled={isLoading || isJoinRoomPending}
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+          >
+            {isLoading || isJoinRoomPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Users className="mr-2 h-4 w-4" />
+            )}
+            Join Room
+          </Button>
+        </div>
+      );
+    }
+  };
+
   const renderContent = () => {
     if (showProgressBar) {
       return (
-        <div className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Secure Room</h2>
-          <p className="text-gray-600">Status: IN_PROGRESS</p>
-          <p className="text-center">Discussion is ongoing.</p>
-          <p className="text-center text-gray-500">
-            Estimated time remaining: {Math.floor(timeRemaining / 60)}:
-            {(timeRemaining % 60).toString().padStart(2, "0")}
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${(timeRemaining / 120) * 100}%` }}
-            ></div>
-          </div>
+        <div className="p-6">
+          <SecureRoomTransactions
+            timeRemaining={timeRemaining}
+            onComplete={() => {
+              setShowProgressBar(false);
+              window.location.reload();
+            }}
+          />
           <Button
             variant="destructive"
             className="w-full mt-4"
@@ -301,7 +456,7 @@ const InvestorFlowDialog = ({
     }
 
     return (
-      <div className="flex flex-col space-y-4 p-4">
+      <div className="flex flex-col space-y-6 p-4">
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -309,55 +464,30 @@ const InvestorFlowDialog = ({
         )}
 
         <div className="space-y-4">
-          {step === 1 && (
-            <div className="space-y-4">
-              <p>Required Investment: {maxInvestment} USDT</p>
-              <p>Current Balance: {balance ? balance.formatted : "0"} USDT</p>
-              <Button
-                onClick={handleTransfer}
-                disabled={isLoading || isTransferPending}
-                className="w-full"
-              >
-                {(isLoading || isTransferPending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Transfer Funds
-              </Button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <p>Please approve the contract to manage your agent</p>
-              <Button
-                onClick={handleApprove}
-                disabled={isLoading || isApprovePending}
-                className="w-full"
-              >
-                {(isLoading || isApprovePending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Approve Contract
-              </Button>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              <p>Ready to join the room!</p>
-              <Button
-                onClick={handleJoinRoom}
-                disabled={isLoading || isJoinRoomPending}
-                className="w-full"
-              >
-                {(isLoading || isJoinRoomPending) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Join Room
-              </Button>
-            </div>
-          )}
+          <StepCard
+            title="Transfer Funds"
+            description="Send required USDT to the secure wallet"
+            icon={Wallet}
+            isActive={step === 1}
+            isCompleted={step > 1}
+          />
+          <StepCard
+            title="Approve Contract"
+            description="Grant permission for secure operations"
+            icon={Key}
+            isActive={step === 2}
+            isCompleted={step > 2}
+          />
+          <StepCard
+            title="Join Room"
+            description="Enter the secure trading environment"
+            icon={Users}
+            isActive={step === 3}
+            isCompleted={step > 3}
+          />
         </div>
+
+        {renderStepContent()}
       </div>
     );
   };
