@@ -306,10 +306,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex h-full flex-col">
             <div className="flex h-16 items-center border-b px-4">
               <Link href="/" className="flex items-center gap-2 pl-2">
-                <Image src={logo} alt="Logo" className="h-8 w-8" />{" "}
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  KOVA
-                </span>
+                <Image src={logo} alt="Logo" className="h-12 w-auto" />{" "}
               </Link>
             </div>
             <div className="flex-1 overflow-auto py-2">

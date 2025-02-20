@@ -21,11 +21,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="pl-5">
             <Link href="/" className="flex items-center">
-              <Image src={logo} alt="Logo" className="h-8 w-8" />{" "}
-              {/* Add your logo image here */}
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                KOVA
-              </span>
+              <Image src={logo} alt="Logo" className="h-12 w-auto" />{" "}
             </Link>
           </div>
 
