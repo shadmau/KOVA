@@ -26,58 +26,117 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const queryClient = new QueryClient();
   const isHomePage = router.pathname === "/";
+  const isAppPage = router.pathname === "/app";
 
-  const Layout = isHomePage
-    ? ({ children }: { children: React.ReactNode }) => (
-        <>
-          <Head>
-            <link
-              rel="preload"
-              href="/fonts/AdelleSans-Regular.woff"
-              as="font"
-              crossOrigin=""
-            />
-            <link
-              rel="preload"
-              href="/fonts/AdelleSans-Regular.woff2"
-              as="font"
-              crossOrigin=""
-            />
-            <link
-              rel="preload"
-              href="/fonts/AdelleSans-Semibold.woff"
-              as="font"
-              crossOrigin=""
-            />
-            <link
-              rel="preload"
-              href="/fonts/AdelleSans-Semibold.woff2"
-              as="font"
-              crossOrigin=""
-            />
+  // Create separate layouts for home page and app page
+  const HomeLayout = ({ children }: { children: React.ReactNode }) => (
+    <>
+      <Head>
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff2"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff2"
+          as="font"
+          crossOrigin=""
+        />
 
-            <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
-            <link rel="icon" href="/favicons/icon.svg" type="image/svg+xml" />
-            <link
-              rel="apple-touch-icon"
-              href="/favicons/apple-touch-icon.png"
-            />
-            <link rel="manifest" href="/favicons/manifest.json" />
+        <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicons/icon.svg" type="image/svg+xml" />
+        <link
+          rel="apple-touch-icon"
+          href="/favicons/apple-touch-icon.png"
+        />
+        <link rel="manifest" href="/favicons/manifest.json" />
 
-            <title>KOVA</title>
-            <meta name="description" content="KOVA" />
-          </Head>
-          <WagmiProvider config={wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
-              <RainbowKitProvider>
-                <Navbar />
-                {children}
-              </RainbowKitProvider>
-            </QueryClientProvider>
-          </WagmiProvider>
-        </>
-      )
-    : AppLayout;
+        <title>KOVA</title>
+        <meta name="description" content="KOVA" />
+      </Head>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>
+            {children}
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </>
+  );
+
+  const AppPageLayout = ({ children }: { children: React.ReactNode }) => (
+    <>
+      <Head>
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff2"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff2"
+          as="font"
+          crossOrigin=""
+        />
+
+        <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicons/icon.svg" type="image/svg+xml" />
+        <link
+          rel="apple-touch-icon"
+          href="/favicons/apple-touch-icon.png"
+        />
+        <link rel="manifest" href="/favicons/manifest.json" />
+
+        <title>KOVA</title>
+        <meta name="description" content="KOVA" />
+      </Head>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>
+            <Navbar />
+            {children}
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </>
+  );
+
+  // Choose the appropriate layout based on the route
+  let Layout;
+  if (isHomePage) {
+    Layout = HomeLayout;
+  } else if (isAppPage) {
+    Layout = AppPageLayout;
+  } else {
+    Layout = AppLayout;
+  }
 
   return (
     <>
