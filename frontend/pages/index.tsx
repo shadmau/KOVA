@@ -7,7 +7,7 @@ export default function LandingPage() {
   return (
     <>
       <Head>
-        <title>KOVA - Own Your Agent.</title>
+        <title>KOVA - Own Your Agent. Own Your Future.</title>
         <meta name="description" content="Own, control, and protect your AI. KOVA is the secure AI network for builders, investors, and early adopters. Join the future today." />
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;700;800&family=Work+Sans:wght@300;400&family=Fira+Code&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
@@ -27,16 +27,20 @@ export default function LandingPage() {
                 />
               </div>
               <nav>
-                <span className="text-[#555555] font-['IBM_Plex_Sans'] font-semibold px-6 py-2">
-                  Coming Soon
-                </span>
+                <Link href="https://forms.gle/dkUJUALLc87qFUDQ6" passHref target="_blank" rel="noopener noreferrer">
+                  <Button 
+                    className="bg-[#FF5C00] text-white border border-[#111111] hover:bg-[#FF5C00] hover:shadow-[0_0_15px_rgba(255,92,0,0.3)] transition-all font-['IBM_Plex_Sans'] font-semibold px-6 py-2 rounded-lg text-sm shadow-md hover:scale-105 hover:shadow-lg transition-transform"
+                  >
+                    Join Waitlist →
+                  </Button>
+                </Link>
               </nav>
             </div>
           </div>
         </header>
 
         <div className="container mx-auto px-4 py-16 max-w-6xl">
-          <section className="py-16 text-center relative overflow-hidden">
+          <section className="py-16 mb-2 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-[#FFFFFF] to-[#FCFCFC] z-0"></div>
             <div className="absolute inset-0 bg-[#FF5C00] opacity-[0.01] z-0"></div>
             
@@ -70,12 +74,12 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-col items-center space-y-4">
+              <div className="mb-2 flex flex-col items-center space-y-2">
   {/* Primary CTA: Email Signup */}
 
   <Link href="https://forms.gle/dkUJUALLc87qFUDQ6" passHref target="_blank" rel="noopener noreferrer">
     <Button 
-      className="bg-[#FF5C00] text-white border border-[#111111] hover:bg-[#FF5C00] hover:shadow-[0_0_15px_rgba(255,92,0,0.3)] transition-all font-['IBM_Plex_Sans'] font-semibold px-10 py-4 rounded-lg text-xl shadow-lg hover:scale-105 hover:shadow-xl transition-transform"
+      className="mb-4 bg-[#FF5C00] text-white border border-[#111111] hover:bg-[#FF5C00] hover:shadow-[0_0_15px_rgba(255,92,0,0.3)] transition-all font-['IBM_Plex_Sans'] font-semibold px-10 py-4 rounded-lg text-xl shadow-lg hover:scale-105 hover:shadow-xl transition-transform"
     >
       Join Waitlist →
     </Button>
@@ -84,6 +88,7 @@ export default function LandingPage() {
   <p className="text-[#555555] font-['Work_Sans'] text-lg">  
   Early access grants exclusive perks
   </p>
+  {/*
   <Link href="https://x.com/joinKOVA" passHref target="_blank" rel="noopener noreferrer">
     <Button 
       className="mt-2 bg-white text-[#FF5C00] border border-[#FF5C00] hover:bg-[#FF5C00]/5 transition-all font-['IBM_Plex_Sans'] font-semibold px-8 py-3 rounded-lg shadow-sm"
@@ -91,35 +96,33 @@ export default function LandingPage() {
       Follow on <span className="mr-2 text-[#FF5C00]">𝕏</span> →
     </Button>
   </Link>
+  */}
 </div>
               
             </div>
           </section>
 
-          <section className="py-12 mb-10">  
+          <section className="py-16 mb-0">  
   <div className="bg-[#FAFAFA] text-[#111111] p-10 rounded-lg shadow-[0_5px_20px_rgba(0,0,0,0.05)] transform transition-all hover:shadow-[0_5px_25px_rgba(0,0,0,0.08)] hover:shadow-[#FF5C00]/5 duration-300 border border-[#CCCCCC]/20">
     <h2 className="text-2xl md:text-3xl font-['IBM_Plex_Sans'] font-semibold mb-4">Your AI. Your Rules.</h2>
     <p className="text-xl font-['Work_Sans'] leading-relaxed mb-6">
   KOVA is the first AI platform where <strong className="font-bold">you</strong> fully own and control your AI Agents-private by design and censorship-free.
       </p>
-
+{/*
     <div className="text-center">
       <p className="text-lg font-['Work_Sans'] text-[#555555]">
         Ready to shape AI ownership?{" "}
-        <Link href="https://x.com/joinKOVA" passHref target="_blank" rel="noopener noreferrer">
-          <span className="text-[#FF5C00] hover:underline cursor-pointer">Join us on X</span>
-        </Link>
-        {" "}or{" "}
+        
         <Link href="https://forms.gle/dkUJUALLc87qFUDQ6" passHref target="_blank" rel="noopener noreferrer">
-          <span className="text-[#FF5C00] hover:underline cursor-pointer">sign up for early updates</span>
+          <span className="text-[#FF5C00] hover:underline cursor-pointer">Sign up for early updates</span>
         </Link>.
       </p>
-    </div>
+    </div>*/}
   </div>
 </section>
 
           {/* How KOVA Works - New Section */}
-          <section className="py-12 mb-20">
+          <section className="py-16 mb-2">
             <div className="bg-[#FAFAFA] text-[#111111] p-10 rounded-lg shadow-[0_5px_20px_rgba(0,0,0,0.05)] transform transition-all hover:shadow-[0_5px_25px_rgba(0,0,0,0.08)] hover:shadow-[#FF5C00]/5 duration-300 border border-[#CCCCCC]/20">
               <h2 className="text-2xl md:text-3xl font-['IBM_Plex_Sans'] font-semibold mb-6">
                 How KOVA Works
@@ -162,14 +165,14 @@ export default function LandingPage() {
                     <h3 className="text-xl font-semibold ml-3 font-['IBM_Plex_Sans'] text-[#111111] group-hover:text-[#FF5C00] transition-colors">Profit Your Way</h3>
                   </div>
                   <p className="text-[#555555] font-['Work_Sans']">
-                  Encrypt your workflows and control sharing. License your Agent’s skills, sell insights securely, or collaborate—you set the terms.
+                  Encrypt your workflows and control sharing. License your Agent's skills, sell insights securely, or collaborate—you set the terms.
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="py-16 mb-20 rounded-xl shadow-[0_5px_20px_rgba(0,0,0,0.05)] relative overflow-hidden border border-[#CCCCCC]/30 border-dashed bg-[#FAFAFA]">
+          <section className="py-16 mb-2 rounded-xl shadow-[0_5px_20px_rgba(0,0,0,0.05)] relative overflow-hidden border border-[#CCCCCC]/30 border-dashed bg-[#FAFAFA]">
             <div className="absolute inset-0 bg-gradient-to-br from-[#FFFFFF] to-[#F5F5F5] z-0"></div>
             
             <div className="absolute inset-0 rounded-xl border border-[#FF5C00]/10 shadow-[0_0_15px_rgba(255,92,0,0.05)] pointer-events-none"></div>
@@ -214,8 +217,8 @@ export default function LandingPage() {
         </div>
 
         {/* Future of KOVA Section  */}
-        <div className="container mx-auto px-4 max-w-6xl mb-20">
-          <section className="py-16 rounded-xl overflow-hidden relative">
+        <div className="container mx-auto px-4 max-w-6xl mb-10">
+          <section className="py-16 mb-2 rounded-xl overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-[#FFF6F1] to-[#FFFFFF] z-0"></div>
             <div className="absolute inset-0 bg-[#FF5C00] opacity-[0.01] z-0"></div>
             
