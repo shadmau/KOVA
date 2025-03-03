@@ -64,7 +64,7 @@ export default function LandingPage() {
                   <div className="relative pb-[56.25%]"> {/* 16:9 aspect ratio */}
                     <iframe 
                       className="absolute top-0 left-0 w-full h-full"
-                      src="https://www.youtube.com/embed/9ZoSBpoFVO8?rel=0" 
+                      src="https://www.youtube.com/embed/dekNTQjvwXY?rel=0" 
                       title="KOVA - Own, Control, and Protect Your AI"
                       frameBorder="0" 
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
