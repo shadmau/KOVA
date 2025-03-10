@@ -1,7 +1,482 @@
 import Head from "next/head";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+function UseCasesCarousel() {
+  const useCases = [
+    {
+    title: "Healthcare",
+    description: "Secure AI diagnostics without data exposure.",
+    icon: "🚑",
+    detailedDescription: "KOVA enables you to deploy AI Agents for diagnostics (e.g. analyzing MRI scans for early disease detection). Your agents securely share insights, self-destruct sensitive data after analysis, and ensure compliance with regulations like HIPAA and GDPR.",
+    benefits: [
+    { icon: "🔐", title: "Agent Ownership", description: "Full control and ownership of your AI Agents, eliminating third-party data risks." },
+    { icon: "🛡️", title: "TEE Secure Execution", description: "Sensitive health data remains fully protected at all times." }
+    ]
+    },
+    {
+    title: "Cybersecurity",
+    description: "AI Agents privately share threat intelligence with zero data exposure.",
+    icon: "🛡️",
+    detailedDescription: "KOVA enables organizations to collaborate on threat intelligence (e.g. phishing pattern analysis) without exposing sensitive network data. AI Agents autonomously assess risks, coordinate responses, and ensure all interaction remains private.",
+    benefits: [
+    { icon: "🕵️‍♂️", title: "Autonomous Security", description: "Agents act on threats without data leaks." },
+    { icon: "🔒", title: "Data Privacy", description: "Threat intel remains encrypted in Trusted Execution Environments - even during cross-team collaboration." }
+    ]
+    },
+    {
+    title: "Biotech & Pharma",
+    description: "Accelerate collaborative drug discovery with AI Agents.",
+    icon: "🧬",
+   
+    detailedDescription: "KOVA enables collaboration on AI-driven drug discovery (e.g., analyzing genomic datasets) without exposing proprietary data. AI Agents process sensitive research in TEEs, ensuring your IP stays encrypted and fully under your control.",
+    benefits: [
+    { icon: "🧪", title: "Secure Discovery", description: "Collaborate without exposing raw datasets." },
+    { icon: "🔐", title: "True Data Ownership", description: "You maintain complete control over your research data." }
+    ]
+    },
+    {
+    title: "Finance & Trading",
+    description: "Securely monetize your trading strategies as tradable assets - without exposing secrets.",
+    icon: "📊",
+    detailedDescription: "KOVA enables traders and investment firms to license algorithmic trading strategies as digital assets. Investors execute trades in TEEs, ensuring the logic remains private.",
+    benefits: [
+    { icon: "💹", title: "Encrypted Strategies", description: "Share strategies without risk of exposure." },
+    { icon: "💰", title: "Monetization", description: "Securely monetize your algorithmic trading strategies." }
+    ]
+    },
+    {
+    title: "Business Automation",
+    description: "Privately-owned AI automation: No vendor lock-in.",
+    icon: "📈",
+    detailedDescription: "KOVA enables enterprises to deploy AI assistants for tasks like HR, payroll, and sales forecasting. Agents operate in TEEs, ensuring workflows run without exposing sensitive data.",
+    benefits: [
+    { icon: "🗃️", title: "Full Control", description: "AI agents execute tasks in encrypted enclaves — no third-party access, no data leaks." },
+    { icon: "💰", title: "Cost Efficiency", description: "Avoid costly SaaS subscriptions and retain ownership of your workflows." }
+    ]
+    }/*,
+    {
+    title: "Legal & Compliance",
+    description: "Automate compliance audits with confidential, privately-owned AI.",
+    icon: "⚖️",
+    detailedDescription: "Confidentially automate compliance audits, legal document reviews, and contract analyses with AI Agents. Sensitive information remains fully protected, eliminating exposure risks or unauthorized retention.",
+    benefits: [
+    { icon: "📜", title: "Private Automation", description: "Confidential document analysis without exposure." },
+    { icon: "🔑", title: "Ownership Guarantee", description: "You have full control over your AI Agents." }
+    ]
+    }*/
+    ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedUseCase, setSelectedUseCase] = useState<typeof useCases[0] | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  
+  // Modal DOM ref for direct manipulation
+  const [modalElement, setModalElement] = useState<HTMLDivElement | null>(null);
+  
+  useEffect(() => {
+    // Create modal element in the body on mount
+    const modalEl = document.createElement('div');
+    modalEl.id = 'modal-root';
+    document.body.appendChild(modalEl);
+    setModalElement(modalEl);
+    
+    // Remove on unmount
+    return () => {
+      if (document.body.contains(modalEl)) {
+        document.body.removeChild(modalEl);
+      }
+    };
+  }, []);
+  
+  // Initialize slide width on first render
+  useEffect(() => {
+    const handleResize = () => {
+      // Just to handle responsive layout changes
+      setCurrentIndex(prev => prev);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (modalElement) {
+      if (modalOpen && selectedUseCase) {
+        renderModal();
+      } else {
+        // Clear the modal content
+        modalElement.innerHTML = '';
+      }
+    }
+  }, [modalOpen, selectedUseCase, modalElement]);
+
+  const handlePrev = () => {
+    if (isAnimating) return; 
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev <= 0 ? useCases.length - 1 : prev - 1));
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 200); 
+    }, 350); // This is the fade-out duration
+  };
+
+  const handleNext = () => {
+    if (isAnimating) return; 
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev >= useCases.length - 1 ? 0 : prev + 1));
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 200); 
+    }, 350); // This is the fade-out duration
+  };
+
+  const openModal = (useCase: typeof useCases[0]) => {
+    setSelectedUseCase(useCase);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
+
+  // Function to render modal content into the DOM
+  const renderModal = () => {
+    if (!modalElement || !selectedUseCase) return;
+    
+    const modalHTML = `
+      <div class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-40" 
+           style="position: fixed; z-index: 9998; top: 0; left: 0; width: 100vw; height: 100vh; overflow: auto;"
+           id="modal-overlay">
+      </div>
+      <div class="fixed top-0 left-0 w-full h-full flex items-center justify-center p-4"
+           style="position: fixed; z-index: 9999; top: 0; left: 0; width: 100vw; height: 100vh; overflow: auto;">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-8 transform transition-all"
+             id="modal-content">
+          <div class="flex justify-between items-start mb-6">
+            <div class="flex items-center">
+              <div class="flex items-center justify-center h-16 w-16 rounded-full bg-[#FF5C00]/10 text-4xl mr-4">
+                ${selectedUseCase.icon}
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold text-[#111111] font-['IBM_Plex_Sans']">
+                ${selectedUseCase.title}
+              </h3>
+            </div>
+            <button 
+              id="modal-close"
+              class="text-[#777777] hover:text-[#333333] transition-colors"
+              aria-label="Close modal">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="text-[#555555] font-['Work_Sans'] mb-8 space-y-4">
+            <p class="text-lg font-medium">${selectedUseCase.description}</p>
+            <p>${selectedUseCase.detailedDescription}</p>
+            
+            <div class="mt-6 pt-4 border-t border-[#EEEEEE]">
+              <h4 class="text-lg font-semibold text-[#333333] mb-3 font-['IBM_Plex_Sans']">Key Benefits</h4>
+              <div class="space-y-3">
+                ${selectedUseCase.benefits.map(benefit => `
+                  <div class="flex items-start">
+                    <div class="text-xl mr-2">${benefit.icon}</div>
+                    <div>
+                      <span class="font-semibold text-[#333333]">${benefit.title}:</span> 
+                      ${benefit.description}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-center">
+            <a 
+              href="https://forms.gle/mzbyRrqosZEk1Fwg7"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="px-6 py-3 bg-[#FF5C00] hover:bg-[#FF7D00] text-white font-medium rounded-lg transition-colors shadow-md hover:shadow-lg cursor-pointer"
+              id="modal-schedule">
+              Explore Partnership
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    modalElement.innerHTML = modalHTML;
+    
+    // Add event listeners
+    const overlay = document.getElementById('modal-overlay');
+    const closeBtn = document.getElementById('modal-close');
+    
+    if (overlay) overlay.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  };
+
+  // Get the visible cards with a continuous sliding window
+  const getVisibleCards = () => {
+    if (currentIndex === useCases.length - 1) {
+      // When at the last item, show [last, first, second]
+      return [
+        useCases[currentIndex],
+        useCases[0],
+        useCases[1],
+      ];
+    } else if (currentIndex === useCases.length - 2) {
+      // When at the second-to-last item, show [second-to-last, last, first]
+      return [
+        useCases[currentIndex],
+        useCases[currentIndex + 1],
+        useCases[0],
+      ];
+    } else {
+      // Normal case: show current and next two
+      return [
+        useCases[currentIndex],
+        useCases[currentIndex + 1],
+        useCases[currentIndex + 2],
+      ];
+    }
+  };
+  
+  const visibleCards = getVisibleCards();
+  
+  return (
+    <div className="flex flex-col items-center justify-center mt-8">
+      <div className="relative w-full max-w-4xl">
+        {/* Previous Button */}
+        <button
+          onClick={handlePrev}
+          disabled={isAnimating}
+          aria-label="Previous case"
+          className={`absolute left-[-15px] md:left-[-28px] top-1/2 transform -translate-y-1/2 z-10 w-[50px] h-[50px] rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center text-[#555555] hover:text-[#FF5C00] border border-[#EEEEEE] hover:border-[#FF5C00]/20 group ${isAnimating ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            className="transition-transform group-hover:-translate-x-0.5"
+          >
+            <path 
+              d="M15 18L9 12L15 6" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        {/* Carousel Container */}
+        <div 
+          ref={carouselRef}
+          className="overflow-hidden w-full"
+        >
+          {/* Mobile View (single card only) */}
+          <div className={`md:hidden transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
+            {visibleCards[0] && (
+              <div 
+                className="bg-white p-6 rounded-lg border border-[#CCCCCC]/20 shadow-[0_5px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_5px_20px_rgba(255,92,0,0.1)] transition-all transform hover:-translate-y-1 duration-300 h-[280px] flex flex-col cursor-pointer"
+                onClick={() => openModal(visibleCards[0]!)}
+              >
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-[#FF5C00]/10 text-3xl mb-3 mx-auto flex-shrink-0">
+                  {visibleCards[0].icon}
+                </div>
+                <h3 className="text-xl font-semibold text-center font-['IBM_Plex_Sans'] mb-2 text-[#111111] flex-shrink-0">
+                  {visibleCards[0].title}
+                </h3>
+                <p className="text-center text-[#555555] font-['Work_Sans'] text-sm flex-grow overflow-y-auto">
+                  {visibleCards[0].description}
+                </p>
+                {visibleCards[0].detailedDescription && (
+                  <button 
+                    className="mt-3 text-sm text-[#FF5C00] hover:text-[#FF7D00] font-medium transition-colors duration-200 mx-auto flex items-center flex-shrink-0 pointer-events-none"
+                  >
+                    Learn More
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="ml-1"
+                    >
+                      <path 
+                        d="M9 18l6-6-6-6" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View (3 cards side by side) */}
+          <div className={`hidden md:grid md:grid-cols-3 gap-4 transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
+            {visibleCards.map((useCase, index) => (
+              <div
+                key={`${index}-${useCase?.title || index}`}
+                className="bg-white p-6 rounded-lg border border-[#CCCCCC]/20 shadow-[0_5px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_5px_20px_rgba(255,92,0,0.1)] transition-all transform hover:-translate-y-1 duration-300 h-[280px] flex flex-col cursor-pointer"
+                onClick={() => useCase && openModal(useCase)}
+              >
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-[#FF5C00]/10 text-3xl mb-3 mx-auto flex-shrink-0">
+                  {useCase?.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-center font-['IBM_Plex_Sans'] mb-2 text-[#111111] flex-shrink-0">
+                  {useCase?.title}
+                </h3>
+                <p className="text-center text-[#555555] font-['Work_Sans'] text-sm flex-grow overflow-y-auto">
+                  {useCase?.description}
+                </p>
+                {useCase?.detailedDescription && (
+                  <button 
+                    className="mt-3 text-sm text-[#FF5C00] hover:text-[#FF7D00] font-medium transition-colors duration-200 mx-auto flex items-center flex-shrink-0 pointer-events-none"
+                  >
+                    Learn More
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="ml-1"
+                    >
+                      <path 
+                        d="M9 18l6-6-6-6" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Navigation Controls */}
+        <div className="flex justify-between items-center mt-4 md:hidden w-full">
+          <button
+            onClick={handlePrev}
+            disabled={isAnimating}
+            aria-label="Previous case"
+            className={`p-2 rounded-full bg-white shadow-sm hover:shadow-md border border-[#EEEEEE] hover:border-[#FF5C00]/20 flex items-center justify-center text-[#555555] hover:text-[#FF5C00] ${isAnimating ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M15 18L9 12L15 6" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div className="flex space-x-1">
+            {Array.from({ length: useCases.length }).map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 rounded-full transition-all ${
+                  index === currentIndex
+                    ? "bg-[#FF5C00] w-4"
+                    : "bg-[#CCCCCC]/40 w-2"
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={handleNext}
+            disabled={isAnimating}
+            aria-label="Next case"
+            className={`p-2 rounded-full bg-white shadow-sm hover:shadow-md border border-[#EEEEEE] hover:border-[#FF5C00]/20 flex items-center justify-center text-[#555555] hover:text-[#FF5C00] ${isAnimating ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                d="M9 6L15 12L9 18" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Next Button */}
+        <button
+          onClick={handleNext}
+          disabled={isAnimating}
+          aria-label="Next case"
+          className={`absolute right-[-15px] md:right-[-28px] top-1/2 transform -translate-y-1/2 z-10 w-[50px] h-[50px] rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition-all flex items-center justify-center text-[#555555] hover:text-[#FF5C00] border border-[#EEEEEE] hover:border-[#FF5C00]/20 group ${isAnimating ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            className="transition-transform group-hover:translate-x-0.5"
+          >
+            <path 
+              d="M9 6L15 12L9 18" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="hidden md:flex justify-center mt-6 space-x-2">
+        {Array.from({ length: useCases.length - 2 }).map((_, index) => (
+          <button
+            key={index}
+            onClick={() => !isAnimating && setCurrentIndex(index)}
+            disabled={isAnimating}
+            aria-label={`Go to case ${index + 1}`}
+            className={`h-2 rounded-full transition-all ${
+              index === currentIndex
+                ? "bg-[#FF5C00] w-8"
+                : "bg-[#CCCCCC]/40 w-2 hover:bg-[#CCCCCC]/60"
+            } ${isAnimating ? 'cursor-not-allowed' : ''}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
@@ -40,7 +515,7 @@ export default function LandingPage() {
                   rel="noopener noreferrer"
                 >
                   <Button className="bg-[#FF5C00] text-white border border-[#111111] hover:bg-[#FF5C00] hover:shadow-[0_0_15px_rgba(255,92,0,0.3)] transition-all font-['IBM_Plex_Sans'] font-semibold px-6 py-2 rounded-lg text-sm shadow-md hover:scale-105 hover:shadow-lg transition-transform">
-                    Claim Early Access →
+                  Join Waitlist →
                   </Button>
                 </Link>
               </nav>
@@ -69,7 +544,7 @@ export default function LandingPage() {
               {/* Problem Statement Section */}
               <div className="flex items-center justify-center mb-12 md:mb-14 space-x-3 md:space-x-4">
                 <svg
-                  className="w-6 h-6 md:w-7 md:h-7 text-[#FF5C00]/60"
+                  className="hidden md:block w-6 h-6 md:w-7 md:h-7 text-[#FF5C00]/60"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -85,7 +560,7 @@ export default function LandingPage() {
                 {/* Text (Increased Weight) */}
                 <p className="text-lg md:text-xl font-medium text-[#333333] font-['Work_Sans'] tracking-tight">
                   AI Agents influence your health, finances, and education...
-                  Shouldn’t you control them?{" "}
+                  Shouldn't you control them?{" "}
                 </p>
               </div>
               {/*  Video Section  */}
@@ -121,7 +596,7 @@ export default function LandingPage() {
                   rel="noopener noreferrer"
                 >
                   <Button className="mb-4 bg-[#FF5C00] text-white border border-[#111111] hover:bg-[#FF5C00] hover:shadow-[0_0_15px_rgba(255,92,0,0.3)] transition-all font-['IBM_Plex_Sans'] font-semibold px-10 py-4 rounded-lg text-xl shadow-lg hover:scale-105 hover:shadow-xl transition-transform">
-                    Claim Early Access →
+                    Join Waitlist →
                   </Button>
                 </Link>
 
@@ -253,7 +728,7 @@ export default function LandingPage() {
                   {
                     title: "Full Ownership",
                     description:
-                      "You own your AI agents and all the data they process",
+                      "You own your AI Agents and all the data they process",
                     icon: "🛡️",
                   },
                   {
@@ -288,6 +763,17 @@ export default function LandingPage() {
             </div>
           </section>
         </div>
+{/* Use Cases Section */}
+<div className="container mx-auto px-4 max-w-6xl">
+  <section className="py-16 pt-2 mb-2">
+    <div className="bg-[#FAFAFA] text-[#111111] p-10 rounded-lg shadow-[0_5px_20px_rgba(0,0,0,0.05)] transform transition-all hover:shadow-[0_5px_25px_rgba(0,0,0,0.08)] hover:shadow-[#FF5C00]/5 duration-300 border border-[#CCCCCC]/20">
+      <h2 className="text-2xl md:text-3xl font-['IBM_Plex_Sans'] font-semibold mb-6 text-center">
+        Industry Solutions
+      </h2>
+      <UseCasesCarousel />
+    </div>
+  </section>
+</div>
 
         {/* Future of KOVA Section  */}
         <div className="container mx-auto px-4 max-w-6xl mb-10">
@@ -373,7 +859,7 @@ export default function LandingPage() {
                     felix@kova.sh
                   </a>
                 </p>
-                <p className="text-[#555555] font-['Work_Sans']">
+                <p className="text-[#555555] font-['Work_Sans'] mb-2">
                   <span className="text-[#FF5C00]">💬</span>{" "}
                   <a
                     href="https://t.me/j0xnvm0"
