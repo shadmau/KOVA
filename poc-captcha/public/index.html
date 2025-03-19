@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA v2 POC</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .captcha-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 5px;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>reCAPTCHA v2 POC</h1>
+    <p>This is a proof of concept for Google's reCAPTCHA v2.</p>
+    
+    <div class="captcha-container">
+        <h2>Verify you're human</h2>
+        <form id="captchaForm">
+            <!-- reCAPTCHA widget will be inserted here -->
+            <div id="recaptchaWidget"></div>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        // Initialize variables
+        let siteKey = '';
+        
+        // Fetch site key from server
+        async function fetchSiteKey() {
+            try {
+                const response = await fetch('http://localhost:3010/api/site-key');
+                const data = await response.json();
+                siteKey = data.siteKey;
+                
+                // After getting the site key, render the reCAPTCHA widget
+                renderRecaptcha();
+            } catch (error) {
+                console.error('Error fetching site key:', error);
+                document.getElementById('recaptchaWidget').innerHTML = 
+                    '<p style="color: red;">Error loading reCAPTCHA. Please refresh the page.</p>';
+            }
+        }
+        
+        // Render the reCAPTCHA widget
+        function renderRecaptcha() {
+            // Check if site key is available
+            if (!siteKey) {
+                console.error('Site key not found');
+                return;
+            }
+            
+            // Render the reCAPTCHA widget
+            grecaptcha.render('recaptchaWidget', {
+                'sitekey': siteKey,
+                'callback': onRecaptchaSuccess,
+                'expired-callback': onRecaptchaExpired,
+                'error-callback': onRecaptchaError
+            });
+        }
+        
+        // Handle form submission
+        document.getElementById('captchaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get the reCAPTCHA response token
+            const recaptchaResponse = grecaptcha.getResponse();
+            
+            if (!recaptchaResponse) {
+                showResult(false, 'Please complete the reCAPTCHA challenge');
+                return;
+            }
+            
+            try {
+                // Send the token to the server for verification
+                const response = await fetch('http://localhost:3010/verify-captcha', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ recaptchaResponse })
+                });
+                
+                const data = await response.json();
+                
+                // Display the result
+                showResult(data.success, data.message);
+                
+                // If verification failed, reset the reCAPTCHA
+                if (!data.success) {
+                    grecaptcha.reset();
+                }
+            } catch (error) {
+                console.error('Error verifying reCAPTCHA:', error);
+                showResult(false, 'Error connecting to server. Please try again.');
+                grecaptcha.reset();
+            }
+        });
+        
+        // Callback when reCAPTCHA is successfully completed
+        function onRecaptchaSuccess(token) {
+            console.log('reCAPTCHA completed successfully');
+        }
+        
+        // Callback when reCAPTCHA response expires
+        function onRecaptchaExpired() {
+            console.log('reCAPTCHA response expired');
+            showResult(false, 'reCAPTCHA response expired. Please solve the challenge again.');
+        }
+        
+        // Callback when reCAPTCHA encounters an error
+        function onRecaptchaError() {
+            console.log('reCAPTCHA error occurred');
+            showResult(false, 'Error loading reCAPTCHA. Please refresh the page.');
+        }
+        
+        // Display result message
+        function showResult(success, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = success ? 'result success' : 'result error';
+            resultDiv.innerText = message;
+        }
+        
+        // Initialize the page
+        window.onload = fetchSiteKey;
+    </script>
+</body>
+</html> 
