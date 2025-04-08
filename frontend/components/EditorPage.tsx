@@ -1,5 +1,4 @@
 import React from "react";
-import FlowNode from "./FlowNode";
 
 const EditorPage = () => {
   return (
