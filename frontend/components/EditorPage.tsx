@@ -1,4 +1,5 @@
 import React from "react";
+import FlowNode from "./FlowNode"; // Ensure FlowNode is imported
 
 const EditorPage = () => {
   return (
@@ -70,9 +71,48 @@ const EditorPage = () => {
               backgroundImage: 'radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0)',
               backgroundSize: '40px 40px'
             }}>
-              {/* Placeholder for react-flow */}
-              <div className="p-8 text-gray-500">
-                React Flow editor will be implemented here
+              {/* Remove placeholder and add FlowNodes */}
+              <div className="relative w-full h-full p-8">
+                <FlowNode 
+                  title="Land on challenge screen - show two boxes"
+                  type="action"
+                  position={{ x: 100, y: 100 }}
+                />
+                <FlowNode
+                  title="First action (Empty)"
+                  type="empty"
+                  position={{ x: 100, y: 250 }}
+                />
+                <FlowNode
+                  title="Second action (Empty)"
+                  type="empty"
+                  position={{ x: 100, y: 400 }}
+                />
+                
+                {/* Connection lines */}
+                <svg className="absolute inset-0 pointer-events-none">
+                  {/* Calculate line coordinates based on node positions/dimensions */}
+                  {/* Example: connecting bottom of first node to top of second node */}
+                  <line
+                    x1={100 + (200 / 2)} // Center X of node 1 (approx) 
+                    y1={100 + 56} // Bottom edge of node 1 (approx height)
+                    x2={100 + (200 / 2)} // Center X of node 2
+                    y2={250 - 6} // Top edge of node 2 (offset for connector)
+                    stroke="#A855F7"
+                    strokeWidth="2"
+                    strokeDasharray="4"
+                  />
+                  {/* Example: connecting bottom of second node to top of third node */}
+                   <line
+                    x1={100 + (200 / 2)} // Center X of node 2
+                    y1={250 + 56} // Bottom edge of node 2
+                    x2={100 + (200 / 2)} // Center X of node 3
+                    y2={400 - 6} // Top edge of node 3
+                    stroke="#A855F7"
+                    strokeWidth="2"
+                    strokeDasharray="4"
+                  />
+                </svg>
               </div>
             </div>
           </div>
