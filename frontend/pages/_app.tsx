@@ -27,6 +27,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const queryClient = new QueryClient();
   const isHomePage = router.pathname === "/";
   const isAppPage = router.pathname === "/app";
+  const isEditorPage = router.pathname === "/editor";
 
   // Create separate layouts for home page and app page
   const HomeLayout = ({ children }: { children: React.ReactNode }) => (
@@ -126,12 +127,56 @@ function MyApp({ Component, pageProps }: AppProps) {
     </>
   );
 
+  const EditorLayout = ({ children }: { children: React.ReactNode }) => (
+    <>
+      <Head>
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Regular.woff2"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff"
+          as="font"
+          crossOrigin=""
+        />
+        <link
+          rel="preload"
+          href="/fonts/AdelleSans-Semibold.woff2"
+          as="font"
+          crossOrigin=""
+        />
+
+        <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+        <link
+          rel="apple-touch-icon"
+          href="/favicons/apple-touch-icon.png"
+        />
+        <link rel="manifest" href="/favicons/manifest.json" />
+
+        <title>KOVA Editor</title>
+        <meta name="description" content="KOVA Editor" />
+      </Head>
+      {children}
+    </>
+  );
+
   // Choose the appropriate layout based on the route
   let Layout;
   if (isHomePage) {
     Layout = HomeLayout;
   } else if (isAppPage) {
     Layout = AppPageLayout;
+  } else if (isEditorPage) {
+    Layout = EditorLayout;
   } else {
     Layout = AppLayout;
   }
