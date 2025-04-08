@@ -1,0 +1,20 @@
+{
+    "environmentName": "Captcha Solver Env",
+    "dockerImage": "ghcr.io/kova-ai/captcha-solver-env:1.0.0",
+    "dockerComposeFile": "ipfs://QmDockerComposeFileHash",
+    "tools": {
+      "YOLO": {
+        "version": "8"
+      },
+      "EasyOCR": {
+        "version": "1.7.1"
+      },
+      "ReasoningLLM": {
+        "model": "llama-3-8b",
+        "weights": "ipfs://QmLlama3Weights"
+      },
+      "Puppeteer": {
+        "version": "22.8.0"
+      }
+    }
+  }

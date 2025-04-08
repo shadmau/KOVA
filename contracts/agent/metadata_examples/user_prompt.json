@@ -1,0 +1,64 @@
+{
+  "agentName": "Captcha Solver",
+  "agentVersion": "1.0",
+  "workflow": [
+    {
+      "step": 1,
+      "tool": "Puppeteer",
+      "action": "clickElement",
+      "parameters": {
+        "elementSelector": "#captchaButton",
+        "delay": 200
+      }
+    },
+    {
+      "step": 2,
+      "tool": "Puppeteer",
+      "action": "screenshot",
+      "parameters": {
+        "size": "full-page"
+      }
+    },
+    {
+      "step": 3,
+      "tool": "EasyOCR",
+      "action": "extractText",
+      "version": "1.7.1",
+      "parameters": {
+        "language": "en",
+        "detail": false
+      },
+      "inputFromStep": 2
+    },
+    {
+      "step": 4,
+      "tool": "YOLO",
+      "action": "identifyObjects",
+      "version": "v8",
+      "parameters": {
+        "confidenceLevel": "80%",
+        "output": ["text"]
+      },
+      "inputFromStep": 2
+    },
+    {
+      "step": 5,
+      "tool": "ReasoningLLM",
+      "action": "decideClicks",
+      "parameters": {
+        "prompt": "Based on YOLO (step 4) bounding boxes and OCR (step 3) text, select tiles with >10% object coverage."
+      },
+      "inputsFromSteps": [4,3]
+    },
+    {
+      "step": 6,
+      "tool": "Puppeteer",
+      "action": "clickTiles",
+      "parameters": {
+        "tileSelectors": "{tilesFromStep5}", 
+        "delay": 100
+      },
+     "inputFromStep": 5
+    }
+  ]
+}
