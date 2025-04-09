@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Head from "next/head";
 import FlowNode from "./FlowNode";
 import MobileWarning from "./MobileWarning";
 
@@ -34,6 +35,11 @@ const EditorPage = () => {
     <div className="h-screen w-full flex flex-col">
       {isMobile && <MobileWarning />}
       
+      <Head>
+        <title>KOVA | Captcha Solver Editor</title>
+        <link rel="stylesheet" href="https://widget.meetvolley.com/static/css/widget.css" />
+        <script type="text/javascript" data-widget="https://api.meetvolley.com/api/widgets/public/7df8d3ce-332c-44dd-9334-f3fc1dc55353" src="https://widget.meetvolley.com/widget.js" defer></script>
+      </Head>
       {/* Header */}
       <div className="bg-white border-b px-4 py-2 flex items-center">
         <button className="text-gray-600 hover:text-gray-800 px-2 py-1 rounded flex items-center gap-2">
